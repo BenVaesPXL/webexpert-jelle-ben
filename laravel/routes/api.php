@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\EventController;
 
 
 // Ticket routes (event-nested). Note: the controller does not implement an
@@ -14,6 +15,11 @@ Route::get('/events/{event}/tickets/{ticket}', [TicketController::class, 'show']
 Route::put('/events/{event}/tickets/{ticket}', [TicketController::class, 'update']);
 Route::delete('/events/{event}/tickets/{ticket}', [TicketController::class, 'destroy']);
 Route::post('/events/{event}/tickets/{ticket}/reserve', [TicketController::class, 'reserve']);
+
+
+Route::get('/events', [EventController::class, 'index']);
+Route::get('/events/{id}', [EventController::class, 'show']);
+
 
 /*
  below are commented examples
