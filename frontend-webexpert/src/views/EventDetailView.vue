@@ -1,32 +1,43 @@
 <template>
-  <section class="hero">
-    <div class="hero-content">
-      <h2>{{ event.title }}</h2>
-      <p>{{ event.date }} • {{ event.location }}</p>
-    </div>
+  <section v-if="loading">
+    <p>Evenement laden...</p>
   </section>
 
-  <div class="content">
-    <section class="description">
-      <h3>Beschrijving</h3>
-      <p>{{ event.description }}</p>
-    </section>
+  <section v-else-if="!event">
+    <p>Evenement niet gevonden.</p>
+  </section>
 
-    <section class="tickets">
-      <h3>Beschikbare tickets</h3>
-      <div class="ticket-grid">
-        <div
-          class="ticket-card"
-          v-for="ticket in event.tickets"
-          :key="ticket.id"
-        >
-          <h4>{{ ticket.type }}</h4>
-          <p>Prijs: €{{ ticket.price }}</p>
-          <button>Reserveer</button>
-        </div>
+  <section v-else>
+    <section class="hero">
+      <div class="hero-content">
+        <h2>{{ event.title }}</h2>
+        <p>
+          Start op {{ new Date(event.start_date).toLocaleDateString() }} om {{ new
+            Date(event.start_date).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit'}) }}
+
+          in {{ event.location }}
+        </p>
       </div>
     </section>
-  </div>
+
+    <div class="content">
+      <section class="description">
+        <h3>Beschrijving</h3>
+        <p>{{ event.description }}</p>
+      </section>
+
+      <section class="tickets">
+        <h3>Beschikbare tickets</h3>
+        <div class="ticket-grid">
+          <div class="ticket-card" v-for="ticket in event.tickets" :key="ticket.id">
+            <h4>{{ ticket.type }}</h4>
+            <p>Prijs: €{{ ticket.price }}</p>
+            <button>Reserveer</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
 </template>
 
 <script>
@@ -37,28 +48,17 @@ export default {
   data() {
     return {
       eventsStore: useEventsStore(),
+      event: null,
+      loading: true,
     };
   },
-  computed: {
-    eventId() {
-      return this.$route.params.id;
-    },
-    event() {
-      return (
-        this.eventsStore.getEventById(this.eventId) || {
-          title: "Event niet gevonden",
-          location: "",
-          date: "",
-          description: "Dit evenement bestaat niet.",
-          tickets: [],
-        }
-      );
-    },
-  },
-  mounted() {
-    this.eventsStore.fetchEvents();
+  async mounted() {
+    const id = this.$route.params.id;
+    this.event = await this.eventsStore.fetchEventById(id);
+    this.loading = false;
   },
 };
+
 </script>
 
 <style scoped>

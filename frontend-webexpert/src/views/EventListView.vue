@@ -9,11 +9,7 @@
 
     <section class="search-section">
       <div class="search-bar">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Zoek op titel, locatie of datum"
-        />
+        <input v-model="searchQuery" type="text" placeholder="Zoek op titel, locatie of datum" />
         <button @click="onSearch">Zoeken</button>
       </div>
     </section>
@@ -24,11 +20,7 @@
         Geen evenementen gevonden.
       </div>
       <div class="event-grid" v-else>
-        <EventCard
-          v-for="event in paginatedEvents"
-          :key="event.id"
-          :event="event"
-        />
+        <EventCard v-for="event in paginatedEvents" :key="event.id" :event="event" />
       </div>
       <div class="pagination" v-if="totalPages > 1">
         <button :disabled="page === 1" @click="page = page - 1">Vorige</button>
@@ -44,13 +36,16 @@
 <script>
 import { useEventsStore } from "../stores/events";
 import EventCard from "../components/EventCard.vue";
+
 export default {
   name: "EventListView",
   components: {
     EventCard,
   },
   data() {
-    return { eventsStore: useEventsStore() };
+    return {
+      eventsStore: useEventsStore(),
+    };
   },
   computed: {
     searchQuery: {
@@ -85,12 +80,11 @@ export default {
     },
   },
   mounted() {
-    // Ensure async fetch is called (even though it does nothing yet) so when API is added
-    // this hook already awaits data.
     this.eventsStore.fetchEvents();
   },
 };
 </script>
+
 
 <style scoped>
 .home {
@@ -206,9 +200,11 @@ export default {
   .hero-content h2 {
     font-size: 1.8rem;
   }
+
   .search-bar {
     flex-direction: column;
   }
+
   .search-bar button {
     width: 100%;
   }

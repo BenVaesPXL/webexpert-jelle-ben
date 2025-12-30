@@ -3,11 +3,8 @@
     <div class="event-image"></div>
     <h4>{{ event.title }}</h4>
     <p class="event-location">{{ event.location }}</p>
-    <p class="event-date">{{ event.date }}</p>
-    <RouterLink
-      :to="{ name: 'event-detail', params: { id: event.id } }"
-      class="details-btn"
-    >
+    <p class="event-date">{{ formattedDate }}</p>
+    <RouterLink :to="{ name: 'event-detail', params: { id: event.id } }" class="details-btn">
       Bekijk details
     </RouterLink>
     <slot name="actions"></slot>
@@ -23,8 +20,23 @@ export default {
       required: true,
     },
   },
+  computed: {
+    formattedDate() {
+      if (!this.event.start_date) return "";
+      const dateObj = new Date(this.event.start_date);
+      const options = { day: "2-digit", month: "2-digit", year: "numeric" };
+      const date = dateObj.toLocaleDateString("nl-BE", options);
+      const time = dateObj.toLocaleTimeString("nl-BE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `${date} om ${time}`;
+    },
+  },
 };
 </script>
+
+
 
 <style scoped>
 .event-card {

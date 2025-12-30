@@ -17,7 +17,7 @@ class EventController extends Controller
             ->orderBy('start_date')
             ->get();*/
 
-        
+
         //vervanging want dr zijn nog geen ticket migrations
         $events = Event::orderBy('start_date')->get();
 
@@ -28,7 +28,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function show($id)
+    /*public function show($id)
     {
         $event = Event::with([
             'tickets' => function ($q) {
@@ -47,6 +47,21 @@ class EventController extends Controller
             'data' => [
                 'event' => $event,
                 'tickets_can_be_bought' => $ticketsCanBeBought,
+            ]
+        ]);
+    }*/
+
+
+    //tijdelijke vervanging, nog geen tickets
+    public function show($id)
+    {
+        $event = Event::findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'event' => $event,
+                'tickets_can_be_bought' => false,
             ]
         ]);
     }
