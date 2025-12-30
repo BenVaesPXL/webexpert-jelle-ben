@@ -1,127 +1,147 @@
 <template>
-    <section class="hero">
-        <div class="hero-content">
-            <h2>{{ event.title }}</h2>
-            <p>{{ event.date }} • {{ event.location }}</p>
-        </div>
+  <section class="hero">
+    <div class="hero-content">
+      <h2>{{ event.title }}</h2>
+      <p>{{ event.date }} • {{ event.location }}</p>
+    </div>
+  </section>
+
+  <div class="content">
+    <section class="description">
+      <h3>Beschrijving</h3>
+      <p>{{ event.description }}</p>
     </section>
 
-    <div class="content">
-        <section class="description">
-            <h3>Beschrijving</h3>
-            <p>{{ event.description }}</p>
-        </section>
-
-        <section class="tickets">
-            <h3>Beschikbare tickets</h3>
-            <div class="ticket-grid">
-                <div class="ticket-card" v-for="ticket in event.tickets" :key="ticket.id">
-                    <h4>{{ ticket.type }}</h4>
-                    <p>Prijs: €{{ ticket.price }}</p>
-                    <button>Reserveer</button>
-                </div>
-            </div>
-        </section>
-    </div>
+    <section class="tickets">
+      <h3>Beschikbare tickets</h3>
+      <div class="ticket-grid">
+        <div
+          class="ticket-card"
+          v-for="ticket in event.tickets"
+          :key="ticket.id"
+        >
+          <h4>{{ ticket.type }}</h4>
+          <p>Prijs: €{{ ticket.price }}</p>
+          <button>Reserveer</button>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+<script>
+import { useEventsStore } from "../stores/events";
 
-const route = useRoute()
-const eventId = route.params.id
-
-const mockEvents = [
-    { id: '1', title: 'Openlucht concert', location: 'Centraal Park', date: '10/12/2025', description: 'Muziek in het park...', tickets: [{ id: 'a', type: 'Standaard', price: 20 }, { id: 'b', type: 'VIP', price: 50 }] },
-    { id: '2', title: 'Tech Meetup', location: 'Campus A', date: '20/11/2025', description: 'Leer over nieuwe tech trends...', tickets: [{ id: 'a', type: 'Standaard', price: 10 }] },
-    { id: '3', title: 'Kunstexpo', location: 'Stedelijk Museum', date: '05/12/2025', description: 'Ontdek moderne kunst...', tickets: [{ id: 'a', type: 'Standaard', price: 15 }] },
-]
-
-const event = ref(mockEvents.find(e => e.id === eventId))
+export default {
+  name: "EventDetailView",
+  data() {
+    return {
+      eventsStore: useEventsStore(),
+    };
+  },
+  computed: {
+    eventId() {
+      return this.$route.params.id;
+    },
+    event() {
+      return (
+        this.eventsStore.getEventById(this.eventId) || {
+          title: "Event niet gevonden",
+          location: "",
+          date: "",
+          description: "Dit evenement bestaat niet.",
+          tickets: [],
+        }
+      );
+    },
+  },
+  mounted() {
+    this.eventsStore.fetchEvents();
+  },
+};
 </script>
 
 <style scoped>
 .hero {
-    width: 100%;
-    background: linear-gradient(135deg, #007bff 0%, #b909c6 100%);
-    color: white;
-    text-align: center;
-    padding: 4rem 1rem;
+  width: 100%;
+  background: linear-gradient(135deg, #007bff 0%, #b909c6 100%);
+  color: white;
+  text-align: center;
+  padding: 4rem 1rem;
 }
 
 .hero-content {
-    max-width: 900px;
-    margin: 0 auto;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .hero-content h2 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .hero-content p {
-    font-size: 1.1rem;
+  font-size: 1.1rem;
 }
 
 .content {
-    margin-left: 1rem;
+  margin-left: 1rem;
 }
 
 .tickets {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .ticket-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 .ticket-card {
-    padding: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    text-align: center;
-    background-color: #fff;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  background-color: #fff;
 }
 
 .ticket-card button {
-    margin-top: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 6px;
-    background-color: #00b4d8;
-    color: white;
-    cursor: pointer;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #00b4d8;
+  color: white;
+  cursor: pointer;
 }
 
 .ticket-card button:hover {
-    background-color: #007bff;
+  background-color: #007bff;
 }
 
 /* Tablet & Desktop */
 @media (min-width: 600px) {
-    .ticket-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .ticket-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
-    .hero-content h2 {
-        font-size: 2.5rem;
-    }
+  .hero-content h2 {
+    font-size: 2.5rem;
+  }
 
-    .ticket-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
+  .ticket-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (min-width: 1440px) {
-    .ticket-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
+  .ticket-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 </style>

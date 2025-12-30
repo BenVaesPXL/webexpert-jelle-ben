@@ -4,6 +4,7 @@
       <h1 class="logo">EventSpot</h1>
       <nav class="nav-links">
         <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/events">Events</RouterLink>
         <RouterLink to="/login">Login</RouterLink>
         <RouterLink to="/register">Registreer</RouterLink>
       </nav>
