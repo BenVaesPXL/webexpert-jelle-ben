@@ -55,22 +55,19 @@ export const useEventsStore = defineStore("events", {
     async fetchEvents() {
       try {
         const res = await fetch("https://webexpert-jelle-ben.ddev.site/api/events");
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch events");
-        }
+        if (!res.ok) throw new Error("Failed to fetch events");
 
         const json = await res.json();
 
         this.events = json.data.map(e => ({
           ...e,
           date: e.start_date,
+          tickets: e.tickets || [], 
         }));
       } catch (error) {
         console.error("Error fetching events:", error);
       }
     },
-
 
 
     async fetchEventById(id) {
@@ -82,12 +79,12 @@ export const useEventsStore = defineStore("events", {
 
         const json = await res.json();
 
-        const event = json.data.event; // haal event object eruit
+        const event = json.data.event;
 
         return {
           ...event,
-          date: event.start_date, // mapping voor frontend
-          tickets: event.tickets || [], // voorlopig leeg array
+          date: event.start_date,
+          tickets: event.tickets || [],
           tickets_can_be_bought: json.data.tickets_can_be_bought
         };
       } catch (error) {

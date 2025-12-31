@@ -9,16 +9,9 @@ class EventController extends Controller
 {
     public function index()
     {
-        // Haal alle events op, met een count van beschikbare tickets per event
-        $events = Event::withCount([
-            'tickets as available_tickets' => function ($q) {
-                $q->where('available_quantity', '>', 0);
-            }
-        ])
-            ->orderBy('start_date')
-            ->get();
+        // Haal alle events op, inclusief tickets
+        $events = Event::with('tickets')->orderBy('start_date')->get();
 
-        // Geeft een lijst van events terug, gesorteerd op startdatum, met het aantal beschikbare tickets
         return response()->json([
             'success' => true,
             'data' => $events

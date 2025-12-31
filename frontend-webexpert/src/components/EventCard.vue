@@ -1,12 +1,21 @@
 <template>
   <div class="event-card">
     <div class="event-image"></div>
+
     <h4>{{ event.title }}</h4>
-    <p class="event-location">{{ event.location }}</p>
-    <p class="event-date">{{ formattedDate }}</p>
+    <p class="event-location">Locatie: {{ event.location }}</p>
+    <p class="event-date">Start: {{ formattedDate }}</p>
+
+    <div v-if="event.tickets && event.tickets.length" class="ticket-info">
+      <p class="event-tickets" v-for="ticket in event.tickets" :key="ticket.id">
+        {{ ticket.type }}: {{ ticket.available_quantity }} beschikbaar
+      </p>
+    </div>
+
     <RouterLink :to="{ name: 'event-detail', params: { id: event.id } }" class="details-btn">
       Bekijk details
     </RouterLink>
+
     <slot name="actions"></slot>
   </div>
 </template>
@@ -36,10 +45,9 @@ export default {
 };
 </script>
 
-
-
 <style scoped>
-.event-card {
+.event-card,
+.ticket-info {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -61,9 +69,14 @@ export default {
 }
 
 .event-location,
-.event-date {
+.event-date,
+.event-tickets {
   font-size: 0.9rem;
   color: #666;
+}
+
+.ticket-info p {
+  margin-block: 0.2rem;
 }
 
 .details-btn {
