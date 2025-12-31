@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Validator;
 class TicketController extends Controller
 {
     /**
+     * Display a listing of tickets for an event.
+     */
+    public function index($eventId)
+    {
+        $event = Event::findOrFail($eventId);
+        $tickets = Ticket::where('event_id', $eventId)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $tickets
+        ]);
+    }
+
+    /**
      * Store a newly created ticket in storage.
      */
     public function store(Request $request, $eventId)
