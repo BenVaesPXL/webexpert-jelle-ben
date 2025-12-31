@@ -7,9 +7,9 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\EventController;
 
 
-// Ticket routes (event-nested). Note: the controller does not implement an
-// `index` method, so there is no listing route here. All controller methods
+// Ticket routes (event-nested). All controller methods
 // expect an event id as the first parameter.
+Route::get('/events/{event}/tickets', [TicketController::class, 'index']);
 Route::post('/events/{event}/tickets', [TicketController::class, 'store']);
 Route::get('/events/{event}/tickets/{ticket}', [TicketController::class, 'show']);
 Route::put('/events/{event}/tickets/{ticket}', [TicketController::class, 'update']);
