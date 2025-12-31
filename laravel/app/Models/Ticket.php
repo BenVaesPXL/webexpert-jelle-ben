@@ -15,10 +15,14 @@ class Ticket extends Model
      */
     protected $fillable = [
         'event_id',
+        'type',
+        'description',
         'price',
-        'amount',
+        'quantity',
+        'available_quantity',
+        'sale_starts_at',
+        'sale_ends_at',
         'status',
-        'sale_start_date',
     ];
 
     /**
@@ -26,17 +30,19 @@ class Ticket extends Model
      */
     protected $casts = [
         'price' => 'decimal:2',
-        'amount' => 'integer',
-        'sale_start_date' => 'datetime',
+        'quantity' => 'integer',
+        'available_quantity' => 'integer',
+        'sale_starts_at' => 'datetime',
+        'sale_ends_at' => 'datetime',
     ];
 
     /**
-     * Relationships - Uncomment when Event model is ready
+     * Relationships
      */
-    // public function event()
-    // {
-    //     return $this->belongsTo(Event::class);
-    // }
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
 
     /**
      * Accessors
@@ -44,7 +50,11 @@ class Ticket extends Model
      */
     public function getIsOnSaleAttribute(): bool
     {
-        return Carbon::now()->isAfter($this->sale_start_date);
+        $now = Carbon::now();
+        $saleStarted = !$this->sale_starts_at || $now->isAfter($this->sale_starts_at);
+        $saleNotEnded = !$this->sale_ends_at || $now->isBefore($this->sale_ends_at);
+        
+        return $saleStarted && $saleNotEnded;
     }
 
     /**
@@ -60,7 +70,16 @@ class Ticket extends Model
      */
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'available')->where('sale_start_date', '<=', Carbon::now());
+        $now = Carbon::now();
+        return $query->where('status', 'available')
+            ->where(function($q) use ($now) {
+                $q->whereNull('sale_starts_at')
+                  ->orWhere('sale_starts_at', '<=', $now);
+            })
+            ->where(function($q) use ($now) {
+                $q->whereNull('sale_ends_at')
+                  ->orWhere('sale_ends_at', '>=', $now);
+            });
     }
 
     /**
