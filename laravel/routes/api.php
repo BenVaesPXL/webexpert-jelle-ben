@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\EventController;
 
@@ -16,6 +18,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/user/password', [AuthController::class, 'updatePassword']);
+
+    // Booking routes
+    Route::get('/bookings', [BookingController::class, 'index']);
+    Route::get('/bookings/upcoming', [BookingController::class, 'upcoming']);
+    Route::get('/bookings/past', [BookingController::class, 'past']);
+    Route::get('/bookings/{id}', [BookingController::class, 'show']);
+    Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+
+    // Favorite routes
+    Route::get('/favorites', [FavoriteController::class, 'index']);
+    Route::post('/favorites/{eventId}', [FavoriteController::class, 'store']);
+    Route::delete('/favorites/{eventId}', [FavoriteController::class, 'destroy']);
+    Route::get('/favorites/{eventId}/check', [FavoriteController::class, 'check']);
 });
 
 

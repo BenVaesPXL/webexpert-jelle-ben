@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\Event;
+use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -213,13 +214,21 @@ class TicketController extends Controller
         $ticket->available_quantity -= $quantity;
         $ticket->save();
 
-        // Create reservation record (you'll need a Reservation model)
-        // For now, we'll just return success
+        // Create booking record
+        $booking = Booking::create([
+            'user_id' => Auth::id(),
+            'event_id' => $eventId,
+            'ticket_id' => $ticket->id,
+            'quantity' => $quantity,
+            'price_paid' => $ticket->price * $quantity,
+            'status' => 'confirmed',
+        ]);
         
         return response()->json([
             'success' => true,
             'message' => 'Tickets reserved successfully.',
             'data' => [
+                'booking' => $booking,
                 'ticket' => $ticket,
                 'quantity' => $quantity,
                 'total_price' => $ticket->price * $quantity
