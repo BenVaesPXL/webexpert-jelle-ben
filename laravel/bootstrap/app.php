@@ -12,11 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
-        $middleware->statefulApi();
+        // Stateless API: use bearer tokens (Sanctum personal access tokens) without stateful cookies.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

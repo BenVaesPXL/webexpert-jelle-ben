@@ -37,11 +37,14 @@ Route::middleware('auth:sanctum')->group(function () {
 // Ticket routes (event-nested). All controller methods
 // expect an event id as the first parameter.
 Route::get('/events/{event}/tickets', [TicketController::class, 'index']);
-Route::post('/events/{event}/tickets', [TicketController::class, 'store']);
 Route::get('/events/{event}/tickets/{ticket}', [TicketController::class, 'show']);
-Route::put('/events/{event}/tickets/{ticket}', [TicketController::class, 'update']);
-Route::delete('/events/{event}/tickets/{ticket}', [TicketController::class, 'destroy']);
-Route::post('/events/{event}/tickets/{ticket}/reserve', [TicketController::class, 'reserve']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/events/{event}/tickets', [TicketController::class, 'store']);
+    Route::put('/events/{event}/tickets/{ticket}', [TicketController::class, 'update']);
+    Route::delete('/events/{event}/tickets/{ticket}', [TicketController::class, 'destroy']);
+    Route::post('/events/{event}/tickets/{ticket}/reserve', [TicketController::class, 'reserve']);
+});
 
 
 Route::get('/events', [EventController::class, 'index']);

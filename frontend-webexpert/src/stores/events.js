@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-const API_URL = "http://127.0.0.1:8000/api/events";
+const API_URL = "https://webexpert-jelle-ben.ddev.site:8443/api/events";
 
 export const useEventsStore = defineStore("events", {
   state: () => ({
@@ -54,25 +54,24 @@ export const useEventsStore = defineStore("events", {
 
     async fetchEvents() {
       try {
-        const res = await fetch("https://webexpert-jelle-ben.ddev.site/api/events");
+        const res = await fetch(API_URL);
         if (!res.ok) throw new Error("Failed to fetch events");
 
         const json = await res.json();
 
-        this.events = json.data.map(e => ({
+        this.events = json.data.map((e) => ({
           ...e,
           date: e.start_date,
-          tickets: e.tickets || [], 
+          tickets: e.tickets || [],
         }));
       } catch (error) {
         console.error("Error fetching events:", error);
       }
     },
 
-
     async fetchEventById(id) {
       try {
-        const res = await fetch(`https://webexpert-jelle-ben.ddev.site/api/events/${id}`);
+        const res = await fetch(`${API_URL}/${id}`);
         if (!res.ok) {
           throw new Error("Failed to fetch event");
         }
@@ -85,7 +84,7 @@ export const useEventsStore = defineStore("events", {
           ...event,
           date: event.start_date,
           tickets: event.tickets || [],
-          tickets_can_be_bought: json.data.tickets_can_be_bought
+          tickets_can_be_bought: json.data.tickets_can_be_bought,
         };
       } catch (error) {
         console.error("Error fetching event:", error);
