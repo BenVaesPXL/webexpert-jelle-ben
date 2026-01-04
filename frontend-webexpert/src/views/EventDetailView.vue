@@ -41,11 +41,22 @@
           >
             <h4>{{ ticket.type }}</h4>
             <p>Prijs: €{{ ticket.price }}</p>
+            <p class="sub">Beschikbaar: {{ ticket.quantity }}</p>
             <div class="quantity">
               <label>Aantal</label>
-              <input type="number" v-model.number="quantity" min="1" />
+              <input
+                type="number"
+                v-model.number="quantities[ticket.id]"
+                min="1"
+                :disabled="!canReserve(ticket)"
+              />
             </div>
-            <button @click="reserve(ticket)">Reserveer</button>
+            <button :disabled="!canReserve(ticket)" @click="reserve(ticket)">
+              Reserveer
+            </button>
+            <p v-if="ticketStatus(ticket)" class="sub status">
+              {{ ticketStatus(ticket) }}
+            </p>
           </div>
         </div>
         <p v-if="reserveMessage" class="success">{{ reserveMessage }}</p>
@@ -83,7 +94,7 @@ export default {
       auth: useAuthStore(),
       event: null,
       loading: true,
-      quantity: 1,
+      quantities: {},
       reserveMessage: null,
       reserveError: null,
       favLoading: false,
@@ -95,12 +106,59 @@ export default {
   async mounted() {
     const id = this.$route.params.id;
     this.event = await this.eventsStore.fetchEventById(id);
+    this.seedQuantities();
     this.loading = false;
     if (this.auth.isAuthenticated) {
       this.fetchFavoriteStatus();
     }
   },
   methods: {
+    seedQuantities() {
+      if (!this.event?.tickets) return;
+      const defaults = {};
+      this.event.tickets.forEach((t) => {
+        defaults[t.id] = this.quantities[t.id] || 1;
+      });
+      this.quantities = defaults;
+    },
+
+    canReserve(ticket) {
+      if (!ticket) return false;
+      if (ticket.quantity <= 0) return false;
+
+      const now = new Date();
+      const startsAt = ticket.sale_starts_at
+        ? new Date(ticket.sale_starts_at)
+        : null;
+      const endsAt = ticket.sale_ends_at ? new Date(ticket.sale_ends_at) : null;
+
+      if (startsAt && !Number.isNaN(startsAt) && startsAt > now) return false;
+      if (endsAt && !Number.isNaN(endsAt) && endsAt < now) return false;
+
+      return true;
+    },
+
+    ticketStatus(ticket) {
+      if (!ticket) return "";
+      if (ticket.quantity <= 0) return "Uitverkocht";
+
+      const now = new Date();
+      const startsAt = ticket.sale_starts_at
+        ? new Date(ticket.sale_starts_at)
+        : null;
+      const endsAt = ticket.sale_ends_at ? new Date(ticket.sale_ends_at) : null;
+
+      if (startsAt && !Number.isNaN(startsAt) && startsAt > now) {
+        return `Verkoop start op ${startsAt.toLocaleString()}`;
+      }
+
+      if (endsAt && !Number.isNaN(endsAt) && endsAt < now) {
+        return "Verkoop afgelopen";
+      }
+
+      return "";
+    },
+
     async reserve(ticket) {
       this.reserveMessage = null;
       this.reserveError = null;
@@ -111,6 +169,12 @@ export default {
           name: "login",
           query: { redirect: this.$route.fullPath },
         });
+        return;
+      }
+
+      const qty = this.quantities[ticket.id] || 1;
+      if (qty < 1) {
+        this.reserveError = "Aantal moet minstens 1 zijn";
         return;
       }
 
@@ -126,17 +190,16 @@ export default {
                 ? `Bearer ${this.auth.token}`
                 : undefined,
             },
-            body: JSON.stringify({ quantity: this.quantity || 1 }),
+            body: JSON.stringify({ quantity: qty }),
           }
         );
         const json = await res.json();
         if (!res.ok) throw new Error(json.message || "Reservatie mislukt");
         this.reserveMessage = json.message || "Tickets gereserveerd";
         this.event.tickets = this.event.tickets.map((t) =>
-          t.id === ticket.id
-            ? { ...t, available_quantity: json.data.ticket.available_quantity }
-            : t
+          t.id === ticket.id ? { ...t, quantity: json.data.ticket.quantity } : t
         );
+        this.quantities = { ...this.quantities, [ticket.id]: 1 };
       } catch (err) {
         this.reserveError = err.message;
       }
@@ -300,6 +363,11 @@ export default {
 
 .error {
   color: #b91c1c;
+}
+
+.status {
+  margin-top: 0.25rem;
+  color: #5c6f82;
 }
 
 /* Tablet & Desktop */

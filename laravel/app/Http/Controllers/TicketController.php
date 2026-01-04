@@ -58,7 +58,6 @@ class TicketController extends Controller
 
         $ticket = new Ticket($validator->validated());
         $ticket->event_id = $event->id;
-        $ticket->available_quantity = $request->quantity;
         $ticket->save();
 
         return response()->json([
@@ -113,13 +112,7 @@ class TicketController extends Controller
         }
 
         $ticket->update($validator->validated());
-        
-        // Update available quantity if total quantity changed
-        if ($request->has('quantity')) {
-            $reserved = $ticket->quantity - $ticket->available_quantity;
-            $ticket->available_quantity = $request->quantity - $reserved;
-            $ticket->save();
-        }
+        $ticket->save();
 
         return response()->json([
             'success' => true,
@@ -142,14 +135,6 @@ class TicketController extends Controller
         }
 
         $ticket = Ticket::where('event_id', $eventId)->findOrFail($id);
-        
-        // Check if tickets have been sold
-        if ($ticket->available_quantity < $ticket->quantity) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete ticket with active reservations.'
-            ], 400);
-        }
 
         $ticket->delete();
 
@@ -202,8 +187,8 @@ class TicketController extends Controller
             ], 400);
         }
 
-        // Check availability
-        if ($ticket->available_quantity < $quantity) {
+        // Check availability using quantity as remaining
+        if ($ticket->quantity < $quantity) {
             return response()->json([
                 'success' => false,
                 'message' => 'Not enough tickets available.'
@@ -211,7 +196,7 @@ class TicketController extends Controller
         }
 
         // Reserve tickets
-        $ticket->available_quantity -= $quantity;
+        $ticket->quantity -= $quantity;
         $ticket->save();
 
         // Create booking record

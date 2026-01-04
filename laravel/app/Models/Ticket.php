@@ -19,7 +19,6 @@ class Ticket extends Model
         'description',
         'price',
         'quantity',
-        'available_quantity',
         'sale_starts_at',
         'sale_ends_at',
         'status',
@@ -31,7 +30,6 @@ class Ticket extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'quantity' => 'integer',
-        'available_quantity' => 'integer',
         'sale_starts_at' => 'datetime',
         'sale_ends_at' => 'datetime',
     ];

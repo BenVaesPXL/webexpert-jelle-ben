@@ -20,7 +20,6 @@ class EventSeeder extends Seeder
                 'location' => 'Antwerpen',
                 'start_offset' => 10,
                 'duration_hours' => 8,
-                'tickets_offset' => 3,
             ],
             [
                 'title' => 'Music Festival',
@@ -28,7 +27,6 @@ class EventSeeder extends Seeder
                 'location' => 'Gent',
                 'start_offset' => 20,
                 'duration_hours' => 12,
-                'tickets_offset' => 5,
             ],
             [
                 'title' => 'Startup Meetup',
@@ -36,7 +34,6 @@ class EventSeeder extends Seeder
                 'location' => 'Brussel',
                 'start_offset' => 30,
                 'duration_hours' => 6,
-                'tickets_offset' => 10,
             ],
             [
                 'title' => 'Design Workshop',
@@ -44,7 +41,6 @@ class EventSeeder extends Seeder
                 'location' => 'Antwerpen',
                 'start_offset' => 12,
                 'duration_hours' => 5,
-                'tickets_offset' => 4,
             ],
             [
                 'title' => 'Photography Expo',
@@ -52,7 +48,6 @@ class EventSeeder extends Seeder
                 'location' => 'Gent',
                 'start_offset' => 15,
                 'duration_hours' => 6,
-                'tickets_offset' => 2,
             ],
             [
                 'title' => 'Food Truck Festival',
@@ -60,7 +55,6 @@ class EventSeeder extends Seeder
                 'location' => 'Brussel',
                 'start_offset' => 25,
                 'duration_hours' => 8,
-                'tickets_offset' => 6,
             ],
             [
                 'title' => 'Gaming Convention',
@@ -68,7 +62,6 @@ class EventSeeder extends Seeder
                 'location' => 'Antwerpen',
                 'start_offset' => 18,
                 'duration_hours' => 10,
-                'tickets_offset' => 5,
             ],
             [
                 'title' => 'Literature Festival',
@@ -76,7 +69,6 @@ class EventSeeder extends Seeder
                 'location' => 'Gent',
                 'start_offset' => 28,
                 'duration_hours' => 7,
-                'tickets_offset' => 3,
             ],
             [
                 'title' => 'Charity Run',
@@ -84,7 +76,6 @@ class EventSeeder extends Seeder
                 'location' => 'Brussel',
                 'start_offset' => 35,
                 'duration_hours' => 4,
-                'tickets_offset' => 7,
             ],
         ];
 
@@ -95,7 +86,6 @@ class EventSeeder extends Seeder
                 'location' => $data['location'],
                 'start_date' => Carbon::now()->addDays($data['start_offset'])->addHours(9),
                 'end_date' => Carbon::now()->addDays($data['start_offset'])->addHours(9 + $data['duration_hours']),
-                'tickets_available_from' => Carbon::now()->addDays($data['tickets_offset']),
                 'owner_id' => $admin->id,
             ]);
         }

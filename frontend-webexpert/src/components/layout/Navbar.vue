@@ -10,6 +10,7 @@
           <RouterLink to="/register">Registreer</RouterLink>
         </template>
         <template v-else>
+          <RouterLink v-if="auth.isAdmin" to="/admin/events">Admin</RouterLink>
           <RouterLink to="/profile">Profiel</RouterLink>
           <button class="logout" @click="logout">Logout</button>
         </template>

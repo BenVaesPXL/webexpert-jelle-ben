@@ -8,11 +8,14 @@
 
     <div v-if="event.tickets && event.tickets.length" class="ticket-info">
       <p class="event-tickets" v-for="ticket in event.tickets" :key="ticket.id">
-        {{ ticket.type }}: {{ ticket.available_quantity }} beschikbaar
+        {{ ticket.type }}: {{ ticket.quantity }} beschikbaar
       </p>
     </div>
 
-    <RouterLink :to="{ name: 'event-detail', params: { id: event.id } }" class="details-btn">
+    <RouterLink
+      :to="{ name: 'event-detail', params: { id: event.id } }"
+      class="details-btn"
+    >
       Bekijk details
     </RouterLink>
 
