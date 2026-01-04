@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Stateless API: use bearer tokens (Sanctum personal access tokens) without stateful cookies.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

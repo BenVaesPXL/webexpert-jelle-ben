@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\Event;
+use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -57,7 +58,6 @@ class TicketController extends Controller
 
         $ticket = new Ticket($validator->validated());
         $ticket->event_id = $event->id;
-        $ticket->available_quantity = $request->quantity;
         $ticket->save();
 
         return response()->json([
@@ -112,13 +112,7 @@ class TicketController extends Controller
         }
 
         $ticket->update($validator->validated());
-        
-        // Update available quantity if total quantity changed
-        if ($request->has('quantity')) {
-            $reserved = $ticket->quantity - $ticket->available_quantity;
-            $ticket->available_quantity = $request->quantity - $reserved;
-            $ticket->save();
-        }
+        $ticket->save();
 
         return response()->json([
             'success' => true,
@@ -141,14 +135,6 @@ class TicketController extends Controller
         }
 
         $ticket = Ticket::where('event_id', $eventId)->findOrFail($id);
-        
-        // Check if tickets have been sold
-        if ($ticket->available_quantity < $ticket->quantity) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete ticket with active reservations.'
-            ], 400);
-        }
 
         $ticket->delete();
 
@@ -185,8 +171,8 @@ class TicketController extends Controller
 
         $quantity = $request->quantity;
 
-        // Check if sales have started
-        if ($ticket->sale_starts_at && now()->lt($ticket->sale_starts_at)) {
+        // Require a start date and block until it has passed
+        if (!$ticket->sale_starts_at || now()->lt($ticket->sale_starts_at)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ticket sales have not started yet.'
@@ -201,8 +187,8 @@ class TicketController extends Controller
             ], 400);
         }
 
-        // Check availability
-        if ($ticket->available_quantity < $quantity) {
+        // Check availability using quantity as remaining
+        if ($ticket->quantity < $quantity) {
             return response()->json([
                 'success' => false,
                 'message' => 'Not enough tickets available.'
@@ -210,16 +196,24 @@ class TicketController extends Controller
         }
 
         // Reserve tickets
-        $ticket->available_quantity -= $quantity;
+        $ticket->quantity -= $quantity;
         $ticket->save();
 
-        // Create reservation record (you'll need a Reservation model)
-        // For now, we'll just return success
+        // Create booking record
+        $booking = Booking::create([
+            'user_id' => Auth::id(),
+            'event_id' => $eventId,
+            'ticket_id' => $ticket->id,
+            'quantity' => $quantity,
+            'price_paid' => $ticket->price * $quantity,
+            'status' => 'confirmed',
+        ]);
         
         return response()->json([
             'success' => true,
             'message' => 'Tickets reserved successfully.',
             'data' => [
+                'booking' => $booking,
                 'ticket' => $ticket,
                 'quantity' => $quantity,
                 'total_price' => $ticket->price * $quantity

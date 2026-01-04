@@ -1,6 +1,18 @@
 import { defineStore } from "pinia";
+import { useAuthStore } from "./auth";
 
-const API_URL = "http://127.0.0.1:8000/api/events";
+const API_URL = "https://webexpert-jelle-ben.ddev.site:8443/api/events";
+
+async function csrfHeaders(extra = {}) {
+  const auth = useAuthStore();
+  const token = await auth.ensureCsrf();
+  return {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    ...(token ? { "X-CSRF-TOKEN": token } : {}),
+    ...extra,
+  };
+}
 
 export const useEventsStore = defineStore("events", {
   state: () => ({
@@ -52,27 +64,36 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    async fetchEvents() {
+    async fetchEvents({ includeDrafts = false } = {}) {
+      const headers = { Accept: "application/json" };
+      const url = includeDrafts ? `${API_URL}?include_drafts=1` : API_URL;
+
       try {
-        const res = await fetch("https://webexpert-jelle-ben.ddev.site/api/events");
+        const res = await fetch(url, { headers, credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch events");
 
         const json = await res.json();
 
-        this.events = json.data.map(e => ({
+        this.events = json.data.map((e) => ({
           ...e,
           date: e.start_date,
-          tickets: e.tickets || [], 
+          tickets: e.tickets || [],
         }));
       } catch (error) {
+        this.error = error.message;
         console.error("Error fetching events:", error);
+        throw error;
       }
     },
 
-
     async fetchEventById(id) {
+      const headers = { Accept: "application/json" };
+
       try {
-        const res = await fetch(`https://webexpert-jelle-ben.ddev.site/api/events/${id}`);
+        const res = await fetch(`${API_URL}/${id}`, {
+          headers,
+          credentials: "include",
+        });
         if (!res.ok) {
           throw new Error("Failed to fetch event");
         }
@@ -85,11 +106,192 @@ export const useEventsStore = defineStore("events", {
           ...event,
           date: event.start_date,
           tickets: event.tickets || [],
-          tickets_can_be_bought: json.data.tickets_can_be_bought
+          tickets_can_be_bought: json.data.tickets_can_be_bought,
         };
       } catch (error) {
         console.error("Error fetching event:", error);
         return null;
+      }
+    },
+
+    async createEvent(payload) {
+      const headers = await csrfHeaders();
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to create event");
+      }
+
+      const newEvent = {
+        ...json.data,
+        date: json.data.start_date,
+        tickets: json.data.tickets || [],
+      };
+      this.events = [newEvent, ...this.events];
+      return newEvent;
+    },
+
+    async updateEvent(id, payload) {
+      const headers = await csrfHeaders();
+
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to update event");
+      }
+
+      const updated = {
+        ...json.data,
+        date: json.data.start_date,
+        tickets: json.data.tickets || [],
+      };
+
+      this.events = this.events.map((e) => (e.id === updated.id ? updated : e));
+      if (this.currentEvent?.id === updated.id) {
+        this.currentEvent = updated;
+      }
+
+      return updated;
+    },
+
+    async createTicket(eventId, payload) {
+      const headers = await csrfHeaders();
+
+      const res = await fetch(`${API_URL}/${eventId}/tickets`, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to create ticket");
+      }
+
+      const ticket = json.data;
+
+      // update local state
+      this.events = this.events.map((ev) =>
+        ev.id === Number(eventId)
+          ? { ...ev, tickets: [...(ev.tickets || []), ticket] }
+          : ev
+      );
+
+      if (this.currentEvent?.id == eventId) {
+        this.currentEvent = {
+          ...this.currentEvent,
+          tickets: [...(this.currentEvent.tickets || []), ticket],
+        };
+      }
+
+      return ticket;
+    },
+
+    async updateTicket(eventId, ticketId, payload) {
+      const headers = await csrfHeaders();
+
+      const res = await fetch(`${API_URL}/${eventId}/tickets/${ticketId}`, {
+        method: "PUT",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to update ticket");
+      }
+
+      const ticket = json.data;
+
+      // update local state
+      this.events = this.events.map((ev) =>
+        ev.id === Number(eventId)
+          ? {
+              ...ev,
+              tickets: (ev.tickets || []).map((t) =>
+                t.id === ticketId ? { ...t, ...ticket } : t
+              ),
+            }
+          : ev
+      );
+
+      if (this.currentEvent?.id == eventId) {
+        this.currentEvent = {
+          ...this.currentEvent,
+          tickets: (this.currentEvent.tickets || []).map((t) =>
+            t.id === ticketId ? { ...t, ...ticket } : t
+          ),
+        };
+      }
+
+      return ticket;
+    },
+
+    async deleteTicket(eventId, ticketId) {
+      const headers = await csrfHeaders({ "Content-Type": "application/json" });
+
+      const res = await fetch(`${API_URL}/${eventId}/tickets/${ticketId}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to delete ticket");
+      }
+
+      this.events = this.events.map((ev) =>
+        ev.id === Number(eventId)
+          ? {
+              ...ev,
+              tickets: (ev.tickets || []).filter((t) => t.id !== ticketId),
+            }
+          : ev
+      );
+
+      if (this.currentEvent?.id == eventId) {
+        this.currentEvent = {
+          ...this.currentEvent,
+          tickets: (this.currentEvent.tickets || []).filter(
+            (t) => t.id !== ticketId
+          ),
+        };
+      }
+    },
+
+    async deleteEvent(id) {
+      const headers = await csrfHeaders({ "Content-Type": "application/json" });
+
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to delete event");
+      }
+
+      this.events = this.events.filter((e) => e.id !== id);
+      if (this.currentEvent?.id === id) {
+        this.currentEvent = null;
       }
     },
   },

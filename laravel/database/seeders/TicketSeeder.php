@@ -28,7 +28,6 @@ class TicketSeeder extends Seeder
                     'type' => $type,
                     'price' => $price,
                     'quantity' => $quantity,
-                    'available_quantity' => $quantity,
                 ]);
             }
         }
