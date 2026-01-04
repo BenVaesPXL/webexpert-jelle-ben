@@ -56,6 +56,45 @@
         </article>
       </div>
     </section>
+
+    <section class="panel">
+      <header>
+        <h3>Wachtwoord wijzigen</h3>
+      </header>
+      <form @submit.prevent="changePassword" class="password-form">
+        <label>
+          Huidig wachtwoord
+          <input
+            type="password"
+            v-model="passwordForm.current_password"
+            required
+          />
+        </label>
+        <label>
+          Nieuw wachtwoord
+          <input
+            type="password"
+            v-model="passwordForm.password"
+            required
+            minlength="8"
+          />
+        </label>
+        <label>
+          Bevestig nieuw wachtwoord
+          <input
+            type="password"
+            v-model="passwordForm.password_confirmation"
+            required
+            minlength="8"
+          />
+        </label>
+        <p v-if="passwordError" class="error">{{ passwordError }}</p>
+        <p v-if="passwordSuccess" class="success">{{ passwordSuccess }}</p>
+        <button type="submit" class="btn primary" :disabled="passwordLoading">
+          {{ passwordLoading ? "Bezig..." : "Wijzig wachtwoord" }}
+        </button>
+      </form>
+    </section>
   </div>
 </template>
 
@@ -75,6 +114,14 @@ export default {
       favLoading: false,
       error: null,
       favError: null,
+      passwordForm: {
+        current_password: "",
+        password: "",
+        password_confirmation: "",
+      },
+      passwordLoading: false,
+      passwordError: null,
+      passwordSuccess: null,
     };
   },
   methods: {
@@ -119,6 +166,42 @@ export default {
     formatDate(dateStr) {
       if (!dateStr) return "";
       return new Date(dateStr).toLocaleString();
+    },
+
+    async changePassword() {
+      this.passwordLoading = true;
+      this.passwordError = null;
+      this.passwordSuccess = null;
+
+      try {
+        const token = await this.auth.ensureCsrf();
+        const res = await fetch(`${API_BASE}/user/password`, {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            ...(token ? { "X-CSRF-TOKEN": token } : {}),
+          },
+          credentials: "include",
+          body: JSON.stringify(this.passwordForm),
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.message || "Wachtwoord wijzigen mislukt");
+        }
+
+        this.passwordSuccess = json.message || "Wachtwoord succesvol gewijzigd";
+        this.passwordForm = {
+          current_password: "",
+          password: "",
+          password_confirmation: "",
+        };
+      } catch (err) {
+        this.passwordError = err.message;
+      } finally {
+        this.passwordLoading = false;
+      }
     },
   },
   mounted() {
@@ -181,5 +264,55 @@ header {
 
 .empty {
   color: #6b7280;
+}
+
+.success {
+  color: #15803d;
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.password-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #2b3f55;
+}
+
+.password-form input {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #cfd8e3;
+  font-size: 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #0b5ac2;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.btn.primary {
+  background: linear-gradient(120deg, #0b5ac2, #3f8bff);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(11, 90, 194, 0.25);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
