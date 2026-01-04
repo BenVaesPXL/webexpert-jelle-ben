@@ -2,18 +2,36 @@ import { defineStore } from "pinia";
 
 const API_BASE = "https://webexpert-jelle-ben.ddev.site:8443/api";
 
-async function apiFetch(path, options = {}, token) {
+let csrfToken = null;
+
+async function fetchCsrf() {
+  const res = await fetch(`${API_BASE}/csrf`, { credentials: "include" });
+  const json = await res.json().catch(() => ({}));
+  csrfToken = json.csrf_token || null;
+  return csrfToken;
+}
+
+async function apiFetch(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const needsCsrf = !["GET", "HEAD", "OPTIONS"].includes(method);
+
   const headers = {
     Accept: "application/json",
-    "Content-Type": "application/json",
     ...(options.headers || {}),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
+
+  if (needsCsrf) {
+    headers["Content-Type"] = headers["Content-Type"] || "application/json";
+    const token = await fetchCsrf();
+    if (token) headers["X-CSRF-TOKEN"] = token;
+  }
 
   const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
     ...options,
     headers,
   });
+
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     const message = json.message || "Request failed";
@@ -25,23 +43,16 @@ async function apiFetch(path, options = {}, token) {
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null,
-    token: localStorage.getItem("auth_token") || null,
     loading: false,
     error: null,
   }),
 
   getters: {
-    isAuthenticated: (state) => Boolean(state.token),
+    isAuthenticated: (state) => Boolean(state.user),
     isAdmin: (state) => state.user?.role === "admin",
   },
 
   actions: {
-    setToken(token) {
-      this.token = token;
-      if (token) localStorage.setItem("auth_token", token);
-      else localStorage.removeItem("auth_token");
-    },
-
     async register(payload) {
       this.loading = true;
       this.error = null;
@@ -50,8 +61,9 @@ export const useAuthStore = defineStore("auth", {
           method: "POST",
           body: JSON.stringify(payload),
         });
-        this.setToken(json.data.token);
         this.user = json.data.user;
+        csrfToken = null;
+        await fetchCsrf();
         return json;
       } catch (err) {
         this.error = err.message;
@@ -69,8 +81,9 @@ export const useAuthStore = defineStore("auth", {
           method: "POST",
           body: JSON.stringify(payload),
         });
-        this.setToken(json.data.token);
         this.user = json.data.user;
+        csrfToken = null;
+        await fetchCsrf();
         return json;
       } catch (err) {
         this.error = err.message;
@@ -81,30 +94,30 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async fetchUser() {
-      if (!this.token) return null;
       try {
-        const json = await apiFetch("/user", { method: "GET" }, this.token);
-        this.user = json.data;
+        const json = await apiFetch("/user", { method: "GET" });
+        this.user = json.data || null;
         return this.user;
       } catch (err) {
-        this.logout();
-        throw err;
+        this.user = null;
+        return null;
       }
     },
 
     async logout() {
-      if (!this.token) {
-        this.user = null;
-        return;
-      }
       try {
-        await apiFetch("/logout", { method: "POST" }, this.token);
+        await apiFetch("/logout", { method: "POST" });
       } catch (err) {
         // ignore errors on logout
       } finally {
-        this.setToken(null);
         this.user = null;
+        csrfToken = null;
       }
+    },
+
+    async ensureCsrf() {
+      if (csrfToken) return csrfToken;
+      return fetchCsrf();
     },
   },
 });

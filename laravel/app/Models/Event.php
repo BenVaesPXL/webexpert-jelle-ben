@@ -26,6 +26,7 @@ class Event extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'tickets_available_from' => 'datetime',
+        'is_published' => 'boolean',
     ];
 
     /**

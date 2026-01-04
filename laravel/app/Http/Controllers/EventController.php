@@ -8,13 +8,14 @@ use Carbon\Carbon;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth('sanctum')->user();
+        $user = auth()->user();
+        $includeDrafts = $request->boolean('include_drafts', false);
 
-        // Haal events op; niet-admins zien alleen gepubliceerde events
+        // Only show drafts when explicitly requested by an admin (for admin panel)
         $query = Event::with('tickets')->orderBy('start_date');
-        if (!$user || $user->role !== 'admin') {
+        if (!($user && $user->role === 'admin' && $includeDrafts)) {
             $query->where('is_published', true);
         }
 
@@ -35,7 +36,7 @@ class EventController extends Controller
             }
         ])->findOrFail($id);
 
-        $user = auth('sanctum')->user();
+        $user = auth()->user();
         if ((!$user || $user->role !== 'admin') && !$event->is_published) {
             abort(404);
         }

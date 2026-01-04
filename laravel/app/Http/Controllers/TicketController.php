@@ -171,8 +171,8 @@ class TicketController extends Controller
 
         $quantity = $request->quantity;
 
-        // Check if sales have started
-        if ($ticket->sale_starts_at && now()->lt($ticket->sale_starts_at)) {
+        // Require a start date and block until it has passed
+        if (!$ticket->sale_starts_at || now()->lt($ticket->sale_starts_at)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ticket sales have not started yet.'

@@ -82,10 +82,8 @@ export default {
       const res = await fetch(`${API_BASE}${path}`, {
         headers: {
           Accept: "application/json",
-          Authorization: this.auth.token
-            ? `Bearer ${this.auth.token}`
-            : undefined,
         },
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Request failed");

@@ -63,12 +63,11 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const auth = useAuthStore();
 
-  // If we have a token but no user yet, try to load the user once
-  if (!auth.user && auth.token) {
+  if (!auth.user) {
     try {
       await auth.fetchUser();
     } catch (err) {
-      // Ignore errors; auth store clears token on failure
+      // ignore errors; user stays null
     }
   }
 

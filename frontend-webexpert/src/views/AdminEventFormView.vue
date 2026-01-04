@@ -122,12 +122,10 @@
 import { onMounted, reactive, ref, computed } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useEventsStore } from "../stores/events";
-import { useAuthStore } from "../stores/auth";
 
 const route = useRoute();
 const router = useRouter();
 const eventsStore = useEventsStore();
-const auth = useAuthStore();
 const error = ref("");
 const submitting = ref(false);
 const tickets = ref([]);
@@ -148,7 +146,7 @@ onMounted(async () => {
   if (isEdit.value) {
     const existing =
       eventsStore.getEventById(route.params.id) ||
-      (await eventsStore.fetchEventById(route.params.id, auth.token));
+      (await eventsStore.fetchEventById(route.params.id));
     if (existing) {
       form.title = existing.title || "";
       form.description = existing.description || "";
@@ -194,8 +192,8 @@ async function handleSubmit() {
     const payload = { ...form };
 
     const createdEvent = isEdit.value
-      ? await eventsStore.updateEvent(route.params.id, payload, auth.token)
-      : await eventsStore.createEvent(payload, auth.token);
+      ? await eventsStore.updateEvent(route.params.id, payload)
+      : await eventsStore.createEvent(payload);
 
     const eventId = isEdit.value ? route.params.id : createdEvent.id;
 
@@ -209,7 +207,7 @@ async function handleSubmit() {
     );
 
     for (const id of toDelete) {
-      await eventsStore.deleteTicket(eventId, id, auth.token);
+      await eventsStore.deleteTicket(eventId, id);
     }
 
     for (const t of validTickets) {
@@ -223,19 +221,14 @@ async function handleSubmit() {
       };
 
       if (t.id) {
-        await eventsStore.updateTicket(
-          eventId,
-          t.id,
-          ticketPayload,
-          auth.token
-        );
+        await eventsStore.updateTicket(eventId, t.id, ticketPayload);
       } else {
-        await eventsStore.createTicket(eventId, ticketPayload, auth.token);
+        await eventsStore.createTicket(eventId, ticketPayload);
       }
     }
 
     // Refresh event list to reflect ticket changes (admin sees drafts too)
-    await eventsStore.fetchEvents(auth.token);
+    await eventsStore.fetchEvents();
     router.push({ name: "admin-events" });
   } catch (err) {
     error.value = err.message || "Opslaan mislukt";

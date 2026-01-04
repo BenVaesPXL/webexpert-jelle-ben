@@ -1,6 +1,18 @@
 import { defineStore } from "pinia";
+import { useAuthStore } from "./auth";
 
 const API_URL = "https://webexpert-jelle-ben.ddev.site:8443/api/events";
+
+async function csrfHeaders(extra = {}) {
+  const auth = useAuthStore();
+  const token = await auth.ensureCsrf();
+  return {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    ...(token ? { "X-CSRF-TOKEN": token } : {}),
+    ...extra,
+  };
+}
 
 export const useEventsStore = defineStore("events", {
   state: () => ({
@@ -52,12 +64,12 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    async fetchEvents(token) {
+    async fetchEvents({ includeDrafts = false } = {}) {
       const headers = { Accept: "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
+      const url = includeDrafts ? `${API_URL}?include_drafts=1` : API_URL;
 
       try {
-        const res = await fetch(API_URL, { headers });
+        const res = await fetch(url, { headers, credentials: "include" });
         if (!res.ok) throw new Error("Failed to fetch events");
 
         const json = await res.json();
@@ -74,12 +86,14 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    async fetchEventById(id, token) {
+    async fetchEventById(id) {
       const headers = { Accept: "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
 
       try {
-        const res = await fetch(`${API_URL}/${id}`, { headers });
+        const res = await fetch(`${API_URL}/${id}`, {
+          headers,
+          credentials: "include",
+        });
         if (!res.ok) {
           throw new Error("Failed to fetch event");
         }
@@ -100,16 +114,13 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    async createEvent(payload, token) {
-      if (!token) throw new Error("Authentication required");
+    async createEvent(payload) {
+      const headers = await csrfHeaders();
 
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -127,16 +138,13 @@ export const useEventsStore = defineStore("events", {
       return newEvent;
     },
 
-    async updateEvent(id, payload, token) {
-      if (!token) throw new Error("Authentication required");
+    async updateEvent(id, payload) {
+      const headers = await csrfHeaders();
 
       const res = await fetch(`${API_URL}/${id}`, {
         method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -159,16 +167,13 @@ export const useEventsStore = defineStore("events", {
       return updated;
     },
 
-    async createTicket(eventId, payload, token) {
-      if (!token) throw new Error("Authentication required");
+    async createTicket(eventId, payload) {
+      const headers = await csrfHeaders();
 
       const res = await fetch(`${API_URL}/${eventId}/tickets`, {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -196,16 +201,13 @@ export const useEventsStore = defineStore("events", {
       return ticket;
     },
 
-    async updateTicket(eventId, ticketId, payload, token) {
-      if (!token) throw new Error("Authentication required");
+    async updateTicket(eventId, ticketId, payload) {
+      const headers = await csrfHeaders();
 
       const res = await fetch(`${API_URL}/${eventId}/tickets/${ticketId}`, {
         method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -240,15 +242,13 @@ export const useEventsStore = defineStore("events", {
       return ticket;
     },
 
-    async deleteTicket(eventId, ticketId, token) {
-      if (!token) throw new Error("Authentication required");
+    async deleteTicket(eventId, ticketId) {
+      const headers = await csrfHeaders({ "Content-Type": "application/json" });
 
       const res = await fetch(`${API_URL}/${eventId}/tickets/${ticketId}`, {
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: "include",
       });
 
       const json = await res.json().catch(() => ({}));
@@ -275,15 +275,13 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    async deleteEvent(id, token) {
-      if (!token) throw new Error("Authentication required");
+    async deleteEvent(id) {
+      const headers = await csrfHeaders({ "Content-Type": "application/json" });
 
       const res = await fetch(`${API_URL}/${id}`, {
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
+        credentials: "include",
       });
 
       const json = await res.json().catch(() => ({}));

@@ -42,18 +42,17 @@
             <h4>{{ ticket.type }}</h4>
             <p>Prijs: €{{ ticket.price }}</p>
             <p class="sub">Beschikbaar: {{ ticket.quantity }}</p>
-            <div class="quantity">
-              <label>Aantal</label>
-              <input
-                type="number"
-                v-model.number="quantities[ticket.id]"
-                min="1"
-                :disabled="!canReserve(ticket)"
-              />
-            </div>
-            <button :disabled="!canReserve(ticket)" @click="reserve(ticket)">
-              Reserveer
-            </button>
+            <template v-if="canReserve(ticket)">
+              <div class="quantity">
+                <label>Aantal</label>
+                <input
+                  type="number"
+                  v-model.number="quantities[ticket.id]"
+                  min="1"
+                />
+              </div>
+              <button @click="reserve(ticket)">Reserveer</button>
+            </template>
             <p v-if="ticketStatus(ticket)" class="sub status">
               {{ ticketStatus(ticket) }}
             </p>
@@ -122,6 +121,16 @@ export default {
       this.quantities = defaults;
     },
 
+    async csrfHeaders(extra = {}) {
+      const token = await this.auth.ensureCsrf();
+      return {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...(token ? { "X-CSRF-TOKEN": token } : {}),
+        ...extra,
+      };
+    },
+
     canReserve(ticket) {
       if (!ticket) return false;
       if (ticket.quantity <= 0) return false;
@@ -132,7 +141,8 @@ export default {
         : null;
       const endsAt = ticket.sale_ends_at ? new Date(ticket.sale_ends_at) : null;
 
-      if (startsAt && !Number.isNaN(startsAt) && startsAt > now) return false;
+      // Require a start date and only allow on/after it
+      if (!startsAt || Number.isNaN(startsAt) || startsAt > now) return false;
       if (endsAt && !Number.isNaN(endsAt) && endsAt < now) return false;
 
       return true;
@@ -148,8 +158,10 @@ export default {
         : null;
       const endsAt = ticket.sale_ends_at ? new Date(ticket.sale_ends_at) : null;
 
-      if (startsAt && !Number.isNaN(startsAt) && startsAt > now) {
-        return `Verkoop start op ${startsAt.toLocaleString()}`;
+      if (!startsAt || Number.isNaN(startsAt) || startsAt > now) {
+        return startsAt && !Number.isNaN(startsAt)
+          ? `Verkoop start op ${startsAt.toLocaleString()}`
+          : "Verkoop nog niet gestart";
       }
 
       if (endsAt && !Number.isNaN(endsAt) && endsAt < now) {
@@ -179,17 +191,13 @@ export default {
       }
 
       try {
+        const headers = await this.csrfHeaders();
         const res = await fetch(
           `${API_BASE}/events/${this.event.id}/tickets/${ticket.id}/reserve`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              Authorization: this.auth.token
-                ? `Bearer ${this.auth.token}`
-                : undefined,
-            },
+            headers,
+            credentials: "include",
             body: JSON.stringify({ quantity: qty }),
           }
         );
@@ -212,10 +220,8 @@ export default {
           {
             headers: {
               Accept: "application/json",
-              Authorization: this.auth.token
-                ? `Bearer ${this.auth.token}`
-                : undefined,
             },
+            credentials: "include",
           }
         );
         const json = await res.json();
@@ -245,14 +251,11 @@ export default {
       const method = this.isFavorited ? "DELETE" : "POST";
 
       try {
+        const headers = await this.csrfHeaders({ Accept: "application/json" });
         const res = await fetch(`${API_BASE}/favorites/${this.event.id}`, {
           method,
-          headers: {
-            Accept: "application/json",
-            Authorization: this.auth.token
-              ? `Bearer ${this.auth.token}`
-              : undefined,
-          },
+          headers,
+          credentials: "include",
         });
         const json = await res.json();
         if (!res.ok)

@@ -55,16 +55,14 @@
 import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useEventsStore } from "../stores/events";
-import { useAuthStore } from "../stores/auth";
 
 const eventsStore = useEventsStore();
-const auth = useAuthStore();
 const error = ref("");
 
 onMounted(async () => {
   error.value = "";
   try {
-    await eventsStore.fetchEvents(auth.token);
+    await eventsStore.fetchEvents({ includeDrafts: true });
   } catch (err) {
     error.value = err.message;
   }
@@ -81,7 +79,7 @@ async function confirmDelete(id) {
   if (!confirm("Weet je zeker dat je dit event wil verwijderen?")) return;
   error.value = "";
   try {
-    await eventsStore.deleteEvent(id, auth.token);
+    await eventsStore.deleteEvent(id);
   } catch (err) {
     error.value = err.message;
   }

@@ -15,13 +15,15 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'api/csrf', '/api/csrf', '/csrf'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
+        'https://localhost:5173',
+        'https://127.0.0.1:5173',
         'https://webexpert-jelle-ben.ddev.site',
         'https://webexpert-jelle-ben.ddev.site:8443',
     ],
