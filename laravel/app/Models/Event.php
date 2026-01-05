@@ -15,6 +15,7 @@ class Event extends Model
         'title',
         'description',
         'location',
+        'image',
         'start_date',
         'end_date',
         'tickets_available_from',

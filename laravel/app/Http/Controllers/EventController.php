@@ -66,10 +66,16 @@ class EventController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
             'location' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'max:2048'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'is_published' => ['sometimes', 'boolean'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('events', 'public');
+            $data['image'] = $path;
+        }
 
         $event = Event::create([
             ...$data,
@@ -102,6 +108,7 @@ class EventController extends Controller
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string'],
             'location' => ['sometimes', 'required', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'max:2048'],
             'start_date' => ['sometimes', 'required', 'date'],
             'end_date' => [
                 'sometimes',
@@ -116,6 +123,11 @@ class EventController extends Controller
             ],
             'is_published' => ['sometimes', 'boolean'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('events', 'public');
+            $data['image'] = $path;
+        }
 
         $event->update($data);
 

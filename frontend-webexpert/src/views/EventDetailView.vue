@@ -9,6 +9,13 @@
 
   <section v-else>
     <section class="hero">
+      <div v-if="event.image" class="hero-image">
+        <img 
+          :src="imageUrl" 
+          :alt="event.title"
+          class="image"
+        />
+      </div>
       <div class="hero-content">
         <h2>{{ event.title }}</h2>
         <p>
@@ -110,6 +117,12 @@ export default {
     if (this.auth.isAuthenticated) {
       this.fetchFavoriteStatus();
     }
+  },
+  computed: {
+    imageUrl() {
+      if (!this.event?.image) return null;
+      return `${API_BASE.replace('/api', '')}/storage/${this.event.image}`;
+    },
   },
   methods: {
     seedQuantities() {
@@ -278,7 +291,26 @@ export default {
   background: linear-gradient(135deg, #007bff 0%, #b909c6 100%);
   color: white;
   text-align: center;
-  padding: 4rem 1rem;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+.hero-image {
+  width: 100%;
+  max-width: 600px;
+  height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hero-image .image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-content {
