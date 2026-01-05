@@ -7,46 +7,64 @@
       </div>
     </section>
 
-    <section class="search-section">
-      <div class="search-bar">
-        <input v-model="searchQuery" type="text" placeholder="Zoek op titel, locatie of datum" />
-        <button @click="searchEvents">Zoeken</button>
-      </div>
-    </section>
-
     <section class="events-section">
-      <h3>Populaire evenementen</h3>
+      <h3>Bijna uitverkocht</h3>
+
       <div class="event-grid">
-        <div class="event-card" v-for="event in mockEvents" :key="event.id">
+        <div class="event-card" v-for="event in lowStockEvents" :key="event.id">
           <div class="event-image"></div>
+
           <h4>{{ event.title }}</h4>
           <p class="event-location">{{ event.location }}</p>
-          <p class="event-date">{{ event.date }}</p>
+
+          <p class="event-date">
+            {{ new Date(event.start_date).toLocaleDateString("nl-BE") }}
+          </p>
+
+          <p class="ticket-warning">
+            Nog {{ event.standard_available }} standard tickets
+          </p>
+
           <RouterLink :to="{ name: 'event-detail', params: { id: event.id } }" class="details-btn">
             Bekijk details
           </RouterLink>
-
         </div>
       </div>
     </section>
+
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from "vue";
+import { useEventsStore } from "../stores/events";
 
-const searchQuery = ref('')
+const eventsStore = useEventsStore();
+const searchQuery = ref("");
 
-const mockEvents = ref([
-  { id: 1, title: 'Openlucht concert', location: 'Centraal Park', date: '10/12/2025' },
-  { id: 2, title: 'Tech Meetup', location: 'Campus A', date: '20/11/2025' },
-  { id: 3, title: 'Kunstexpo', location: 'Stedelijk Museum', date: '05/12/2025' },
-])
+onMounted(async () => {
+  await eventsStore.fetchEvents();
+});
 
-const searchEvents = () => {
-  console.log('Zoeken naar:', searchQuery.value)
-}
+const lowStockEvents = computed(() => {
+  return [...eventsStore.events]
+    .map(event => {
+      const standardTicket = event.tickets?.find(
+        t => t.type === "Standard"
+      );
+
+      return {
+        ...event,
+        standard_available: standardTicket
+          ? standardTicket.available_quantity
+          : 0,
+      };
+    })
+    .sort((a, b) => a.standard_available - b.standard_available)
+    .slice(0, 3);
+});
 </script>
+
 
 <style scoped>
 .home {
@@ -76,41 +94,6 @@ const searchEvents = () => {
 
 .hero-content p {
   font-size: 1.1rem;
-}
-
-.search-section {
-  width: 100%;
-  background-color: #f9f9f9;
-  padding: 2rem 1rem;
-  display: flex;
-  justify-content: center;
-}
-
-.search-bar {
-  width: 90%;
-  max-width: 800px;
-  display: flex;
-  gap: 1rem;
-}
-
-.search-bar input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.search-bar button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.search-bar button:hover {
-  background-color: #0056b3;
 }
 
 .events-section {
@@ -155,13 +138,12 @@ const searchEvents = () => {
 }
 
 .details-btn {
-  margin-top: 0.5rem;
+  display: block;
+  margin-block: 1rem;
   background-color: #00b4d8;
   color: white;
-  border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  cursor: pointer;
   text-decoration: none;
 }
 
