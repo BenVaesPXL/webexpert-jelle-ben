@@ -215,7 +215,11 @@ export const useEventsStore = defineStore("events", {
 
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(json.message || JSON.stringify(json.errors) || "Failed to update event");
+        throw new Error(
+          json.message ||
+            JSON.stringify(json.errors) ||
+            "Failed to update event"
+        );
       }
 
       const updated = {
