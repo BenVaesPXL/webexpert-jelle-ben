@@ -1,6 +1,13 @@
 <template>
   <div class="event-card">
-    <div class="event-image"></div>
+    <div class="event-image">
+      <img 
+        v-if="imageUrl" 
+        :src="imageUrl" 
+        :alt="event.title"
+        class="image"
+      />
+    </div>
 
     <h4>{{ event.title }}</h4>
     <p class="event-location">Locatie: {{ event.location }}</p>
@@ -44,6 +51,10 @@ export default {
       });
       return `${date} om ${time}`;
     },
+    imageUrl() {
+      if (!this.event.image) return null;
+      return `${import.meta.env.VITE_API_BASE.replace('/api', '')}/storage/${this.event.image}`;
+    },
   },
 };
 </script>
@@ -69,6 +80,16 @@ export default {
   background-color: #eee;
   border-radius: 6px;
   margin-bottom: 1rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-image .image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .event-location,

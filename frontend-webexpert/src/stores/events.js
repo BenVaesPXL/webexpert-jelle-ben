@@ -138,6 +138,35 @@ export const useEventsStore = defineStore("events", {
       return newEvent;
     },
 
+    async createEventWithFile(formData) {
+      const auth = useAuthStore();
+      const token = await auth.ensureCsrf();
+      const headers = {
+        Accept: "application/json",
+        ...(token ? { "X-CSRF-TOKEN": token } : {}),
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: formData,
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to create event");
+      }
+
+      const newEvent = {
+        ...json.data,
+        date: json.data.start_date,
+        tickets: json.data.tickets || [],
+      };
+      this.events = [newEvent, ...this.events];
+      return newEvent;
+    },
+
     async updateEvent(id, payload) {
       const headers = await csrfHeaders();
 
@@ -151,6 +180,42 @@ export const useEventsStore = defineStore("events", {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(json.message || "Failed to update event");
+      }
+
+      const updated = {
+        ...json.data,
+        date: json.data.start_date,
+        tickets: json.data.tickets || [],
+      };
+
+      this.events = this.events.map((e) => (e.id === updated.id ? updated : e));
+      if (this.currentEvent?.id === updated.id) {
+        this.currentEvent = updated;
+      }
+
+      return updated;
+    },
+
+    async updateEventWithFile(id, formData) {
+      const auth = useAuthStore();
+      const token = await auth.ensureCsrf();
+      // Add _method=PUT for FormData with PUT request
+      formData.append("_method", "PUT");
+      const headers = {
+        Accept: "application/json",
+        ...(token ? { "X-CSRF-TOKEN": token } : {}),
+      };
+
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: formData,
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || JSON.stringify(json.errors) || "Failed to update event");
       }
 
       const updated = {

@@ -38,6 +38,18 @@
         </label>
       </div>
 
+      <label>
+        Afbeelding
+        <input type="file" accept="image/*" @change="handleImageChange" />
+      </label>
+
+      <div v-if="imagePreview" class="image-preview">
+        <img :src="imagePreview" alt="Event preview" />
+        <button type="button" class="btn-remove-image" @click="removeImage">
+          Verwijderen
+        </button>
+      </div>
+
       <div class="card subtle">
         <div class="tickets-header">
           <div>
@@ -141,6 +153,8 @@ const form = reactive({
   end_date: "",
   is_published: false,
 });
+const imageFile = ref(null);
+const imagePreview = ref("");
 
 onMounted(async () => {
   if (isEdit.value) {
@@ -154,6 +168,13 @@ onMounted(async () => {
       form.start_date = toDatetimeLocal(existing.start_date);
       form.end_date = toDatetimeLocal(existing.end_date);
       form.is_published = Boolean(existing.is_published);
+
+      if (existing.image) {
+        imagePreview.value = `${import.meta.env.VITE_API_BASE.replace(
+          "/api",
+          ""
+        )}/storage/${existing.image}`;
+      }
 
       tickets.value = (existing.tickets || []).map((t) => ({
         id: t.id,
@@ -189,11 +210,22 @@ async function handleSubmit() {
   error.value = "";
   submitting.value = true;
   try {
-    const payload = { ...form };
+    // Use FormData to handle file uploads
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("description", form.description);
+    formData.append("location", form.location);
+    formData.append("start_date", form.start_date);
+    formData.append("end_date", form.end_date);
+    formData.append("is_published", form.is_published ? "1" : "0");
+
+    if (imageFile.value) {
+      formData.append("image", imageFile.value);
+    }
 
     const createdEvent = isEdit.value
-      ? await eventsStore.updateEvent(route.params.id, payload)
-      : await eventsStore.createEvent(payload);
+      ? await eventsStore.updateEventWithFile(route.params.id, formData)
+      : await eventsStore.createEventWithFile(formData);
 
     const eventId = isEdit.value ? route.params.id : createdEvent.id;
 
@@ -251,6 +283,23 @@ function addTicket() {
 
 function removeTicket(idx) {
   tickets.value.splice(idx, 1);
+}
+
+function handleImageChange(event) {
+  const file = event.target.files?.[0];
+  if (file) {
+    imageFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result || "";
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function removeImage() {
+  imageFile.value = null;
+  imagePreview.value = "";
 }
 </script>
 
@@ -407,5 +456,34 @@ textarea {
   color: #9e1b1b;
   padding: 0.75rem 1rem;
   border-radius: 8px;
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.btn-remove-image {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.btn-remove-image:hover {
+  background: #c0392b;
 }
 </style>
