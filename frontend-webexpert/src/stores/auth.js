@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-const API_BASE = "https://webexpert-jelle-ben.ddev.site:8443/api";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 let csrfToken = null;
 

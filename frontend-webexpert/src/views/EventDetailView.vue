@@ -83,7 +83,7 @@
 import { useEventsStore } from "../stores/events";
 import { useAuthStore } from "../stores/auth";
 
-const API_BASE = "https://webexpert-jelle-ben.ddev.site:8443/api";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default {
   name: "EventDetailView",

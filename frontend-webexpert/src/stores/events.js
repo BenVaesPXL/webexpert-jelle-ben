@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { useAuthStore } from "./auth";
 
-const API_URL = "https://webexpert-jelle-ben.ddev.site:8443/api/events";
+const API_URL = `${import.meta.env.VITE_API_BASE}/events`;
 
 async function csrfHeaders(extra = {}) {
   const auth = useAuthStore();
