@@ -14,21 +14,53 @@
       </div>
     </section>
 
+    <section class="controls-section">
+      <div class="view-toggle">
+        <button 
+          :class="{ active: viewMode === 'list' }" 
+          @click="viewMode = 'list'"
+        >
+          Lijst
+        </button>
+        <button 
+          :class="{ active: viewMode === 'calendar' }" 
+          @click="viewMode = 'calendar'"
+        >
+          Kalender
+        </button>
+      </div>
+    </section>
+
     <section class="events-section">
-      <h3>Resultaten</h3>
+      <h3>{{ viewMode === 'list' ? 'Resultaten' : 'Evenementen Kalender' }}</h3>
+      
       <div v-if="filteredEvents.length === 0" class="empty-state">
         Geen evenementen gevonden.
       </div>
-      <div class="event-grid" v-else>
-        <EventCard v-for="event in paginatedEvents" :key="event.id" :event="event" />
-      </div>
-      <div class="pagination" v-if="totalPages > 1">
-        <button :disabled="page === 1" @click="page = page - 1">Vorige</button>
-        <span>Pagina {{ page }} / {{ totalPages }}</span>
-        <button :disabled="page === totalPages" @click="page = page + 1">
-          Volgende
-        </button>
-      </div>
+      
+      <template v-else>
+        <!-- List View -->
+        <div v-if="viewMode === 'list'">
+          <div class="event-grid">
+            <EventCard v-for="event in paginatedEvents" :key="event.id" :event="event" />
+          </div>
+          <div class="pagination" v-if="totalPages > 1">
+            <button :disabled="page === 1" @click="page = page - 1">Vorige</button>
+            <span>Pagina {{ page }} / {{ totalPages }}</span>
+            <button :disabled="page === totalPages" @click="page = page + 1">
+              Volgende
+            </button>
+          </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div v-else class="calendar-wrapper">
+          <EventCalendar 
+            :events="allEventsForCalendar" 
+            @event-click="goToEventDetail" 
+          />
+        </div>
+      </template>
     </section>
   </div>
 </template>
@@ -36,15 +68,18 @@
 <script>
 import { useEventsStore } from "../stores/events";
 import EventCard from "../components/EventCard.vue";
+import EventCalendar from "../components/EventCalendar.vue";
 
 export default {
   name: "EventListView",
   components: {
     EventCard,
+    EventCalendar
   },
   data() {
     return {
       eventsStore: useEventsStore(),
+      viewMode: 'list' // 'list' or 'calendar'
     };
   },
   computed: {
@@ -73,11 +108,19 @@ export default {
     paginatedEvents() {
       return this.eventsStore.paginatedEvents;
     },
+    allEventsForCalendar() {
+      // For calendar, we probably want all filtered events, ignoring pagination
+      // so the user can see everything in the month view
+      return this.filteredEvents;
+    }
   },
   methods: {
     onSearch() {
       console.log("Zoeken naar:", this.searchQuery);
     },
+    goToEventDetail(event) {
+      this.$router.push({ name: 'event-detail', params: { id: event.id } });
+    }
   },
   mounted() {
     this.eventsStore.fetchEvents();
@@ -151,10 +194,53 @@ export default {
   background-color: #0056b3;
 }
 
+.controls-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #f9f9f9; /* Same as search section to blend or distinct */
+  border-bottom: 1px solid #eee;
+}
+
+.view-toggle {
+  display: flex;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-toggle button {
+  background: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+  color: #555;
+}
+
+.view-toggle button:hover {
+  background-color: #f0f0f0;
+}
+
+.view-toggle button.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.calendar-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .events-section {
   width: 100%;
-  padding: 3rem 1rem;
-  max-width: none;
+  padding: 3rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .events-section h3 {
