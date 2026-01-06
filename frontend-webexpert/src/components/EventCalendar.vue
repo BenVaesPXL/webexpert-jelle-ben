@@ -166,7 +166,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1.5rem 2.5rem;
   background: #f8f9fa;
   border-bottom: 1px solid #eee;
 }
@@ -211,10 +211,10 @@ export default {
 }
 
 .day-cell {
-  min-height: 120px;
+  min-height: 100px;
   border-right: 1px solid #eee;
   border-bottom: 1px solid #eee;
-  padding: 0.5rem;
+  padding: 0.5rem 1rem;
   display: flex;
   flex-direction: column;
   transition: background 0.2s;

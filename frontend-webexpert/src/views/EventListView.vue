@@ -238,8 +238,9 @@ export default {
 
 .events-section {
   width: 100%;
-  padding: 3rem 1rem;
-  max-width: none;
+  padding: 3rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .events-section h3 {
