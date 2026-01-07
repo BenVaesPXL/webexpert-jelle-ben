@@ -1,12 +1,7 @@
 <template>
   <div class="event-card">
     <div class="event-image">
-      <img 
-        v-if="imageUrl" 
-        :src="imageUrl" 
-        :alt="event.title"
-        class="image"
-      />
+      <img v-if="imageUrl" :src="imageUrl" :alt="event.title" class="image" />
     </div>
 
     <h4>{{ event.title }}</h4>
@@ -19,10 +14,7 @@
       </p>
     </div>
 
-    <RouterLink
-      :to="{ name: 'event-detail', params: { id: event.id } }"
-      class="details-btn"
-    >
+    <RouterLink :to="{ name: 'event-detail', params: { id: event.id } }" class="details-btn">
       Bekijk details
     </RouterLink>
 
