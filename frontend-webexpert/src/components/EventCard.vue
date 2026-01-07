@@ -1,5 +1,6 @@
 <template>
   <div class="event-card">
+    <div v-if="isFavorited" class="favorite-badge" title="Favoriet">★</div>
     <div class="event-image">
       <img v-if="imageUrl" :src="imageUrl" :alt="event.title" class="image" />
     </div>
@@ -47,6 +48,9 @@ export default {
       if (!this.event.image) return null;
       return `${import.meta.env.VITE_API_BASE.replace('/api', '')}/storage/${this.event.image}`;
     },
+    isFavorited() {
+      return Boolean(this.event?.is_favorited || this.event?.favorited);
+    },
   },
 };
 </script>
@@ -64,6 +68,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
 }
 
 .event-image {
@@ -109,5 +114,17 @@ export default {
 
 .details-btn:hover {
   background-color: #007bff;
+}
+
+.favorite-badge {
+  position: absolute;
+  top: 15px;
+  right: 25px;
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.05rem;
+  pointer-events: none;
 }
 </style>

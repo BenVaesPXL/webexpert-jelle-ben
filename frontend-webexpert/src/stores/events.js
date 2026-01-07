@@ -73,12 +73,45 @@ export const useEventsStore = defineStore("events", {
         if (!res.ok) throw new Error("Failed to fetch events");
 
         const json = await res.json();
+        const existingById = this.events.reduce((m, ev) => {
+          m[ev.id] = ev;
+          return m;
+        }, {});
 
-        this.events = json.data.map((e) => ({
-          ...e,
-          date: e.start_date,
-          tickets: e.tickets || [],
-        }));
+        this.events = json.data.map((e) => {
+          const existing = existingById[e.id] || {};
+          const isFav = Boolean(
+            existing.is_favorited || existing.favorited || e.is_favorited || e.favorited
+          );
+
+          return {
+            ...e,
+            date: e.start_date,
+            tickets: e.tickets || [],
+            is_favorited: isFav,
+            favorited: isFav,
+          };
+        });
+
+        try {
+          const auth = useAuthStore();
+          if (auth.isAuthenticated) {
+            const favRes = await fetch(`${import.meta.env.VITE_API_BASE}/favorites`, {
+              headers: { Accept: "application/json" },
+              credentials: "include",
+            });
+            if (favRes.ok) {
+              const favJson = await favRes.json().catch(() => ({}));
+              const favIds = new Set((favJson.data || []).map((f) => f.id));
+              this.events = this.events.map((ev) => ({
+                ...ev,
+                is_favorited: favIds.has(ev.id) || ev.is_favorited,
+                favorited: favIds.has(ev.id) || ev.favorited,
+              }));
+            }
+          }
+        } catch (e) {
+        }
       } catch (error) {
         this.error = error.message;
         console.error("Error fetching events:", error);
@@ -101,12 +134,18 @@ export const useEventsStore = defineStore("events", {
         const json = await res.json();
 
         const event = json.data.event;
+        const existing = this.events.find((ev) => ev.id == event.id) || {};
+        const isFav = Boolean(
+          existing.is_favorited || existing.favorited || event.is_favorited || event.favorited
+        );
 
         return {
           ...event,
           date: event.start_date,
           tickets: event.tickets || [],
           tickets_can_be_bought: json.data.tickets_can_be_bought,
+          is_favorited: isFav,
+          favorited: isFav,
         };
       } catch (error) {
         console.error("Error fetching event:", error);
@@ -217,8 +256,8 @@ export const useEventsStore = defineStore("events", {
       if (!res.ok) {
         throw new Error(
           json.message ||
-            JSON.stringify(json.errors) ||
-            "Failed to update event"
+          JSON.stringify(json.errors) ||
+          "Failed to update event"
         );
       }
 
@@ -291,11 +330,11 @@ export const useEventsStore = defineStore("events", {
       this.events = this.events.map((ev) =>
         ev.id === Number(eventId)
           ? {
-              ...ev,
-              tickets: (ev.tickets || []).map((t) =>
-                t.id === ticketId ? { ...t, ...ticket } : t
-              ),
-            }
+            ...ev,
+            tickets: (ev.tickets || []).map((t) =>
+              t.id === ticketId ? { ...t, ...ticket } : t
+            ),
+          }
           : ev
       );
 
@@ -328,9 +367,9 @@ export const useEventsStore = defineStore("events", {
       this.events = this.events.map((ev) =>
         ev.id === Number(eventId)
           ? {
-              ...ev,
-              tickets: (ev.tickets || []).filter((t) => t.id !== ticketId),
-            }
+            ...ev,
+            tickets: (ev.tickets || []).filter((t) => t.id !== ticketId),
+          }
           : ev
       );
 
@@ -361,6 +400,23 @@ export const useEventsStore = defineStore("events", {
       this.events = this.events.filter((e) => e.id !== id);
       if (this.currentEvent?.id === id) {
         this.currentEvent = null;
+      }
+    },
+
+    // Mark an event as favorited/unfavorited in local store
+    setFavorite(eventId, isFavorited) {
+      this.events = this.events.map((e) =>
+        e.id === Number(eventId)
+          ? { ...e, is_favorited: isFavorited, favorited: isFavorited }
+          : e
+      );
+
+      if (this.currentEvent?.id === Number(eventId)) {
+        this.currentEvent = {
+          ...this.currentEvent,
+          is_favorited: isFavorited,
+          favorited: isFavorited,
+        };
       }
     },
   },

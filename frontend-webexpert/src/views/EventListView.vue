@@ -33,11 +33,11 @@
 
     <section class="events-section">
       <h3>{{ viewMode === 'list' ? 'Resultaten' : 'Evenementen Kalender' }}</h3>
-      
+
       <div v-if="filteredEvents.length === 0" class="empty-state">
         Geen evenementen gevonden.
       </div>
-      
+
       <template v-else>
         <!-- List View -->
         <div v-if="viewMode === 'list'">
@@ -102,15 +102,23 @@ export default {
     filteredEvents() {
       return this.eventsStore.filteredEvents;
     },
+    sortedEvents() {
+      const favFlag = (e) => Boolean(e.is_favorited || e.favorited);
+      return [...this.filteredEvents].sort((a, b) => {
+        const aFav = favFlag(a);
+        const bFav = favFlag(b);
+        if (aFav === bFav) return 0;
+        return aFav ? -1 : 1;
+      });
+    },
     totalPages() {
-      return this.eventsStore.totalPages;
+      return Math.ceil(this.sortedEvents.length / this.eventsStore.perPage) || 1;
     },
     paginatedEvents() {
-      return this.eventsStore.paginatedEvents;
+      const start = (this.page - 1) * this.eventsStore.perPage;
+      return this.sortedEvents.slice(start, start + this.eventsStore.perPage);
     },
     allEventsForCalendar() {
-      // For calendar, we probably want all filtered events, ignoring pagination
-      // so the user can see everything in the month view
       return this.filteredEvents;
     }
   },
@@ -199,7 +207,8 @@ export default {
   display: flex;
   justify-content: center;
   padding: 1rem;
-  background-color: #f9f9f9; /* Same as search section to blend or distinct */
+  background-color: #f9f9f9;
+  /* Same as search section to blend or distinct */
   border-bottom: 1px solid #eee;
 }
 
