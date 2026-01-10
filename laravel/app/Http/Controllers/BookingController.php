@@ -96,11 +96,9 @@ class BookingController extends Controller
             ], 400);
         }
 
-        // Update booking status
         $booking->status = 'cancelled';
         $booking->save();
 
-        // Return tickets to quantity (if needed, adjust logic here)
         $ticket = $booking->ticket;
         $ticket->quantity += $booking->quantity;
         $ticket->save();

@@ -107,8 +107,8 @@ export const useAuthStore = defineStore("auth", {
     async logout() {
       try {
         await apiFetch("/logout", { method: "POST" });
-      } catch (err) {
-        // ignore errors on logout
+      } catch {
+        // Logout errors intentionally ignored
       } finally {
         this.user = null;
         csrfToken = null;

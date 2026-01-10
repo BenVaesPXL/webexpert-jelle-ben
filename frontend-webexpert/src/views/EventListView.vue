@@ -135,7 +135,7 @@ export default {
   },
   methods: {
     onSearch() {
-      console.log("Zoeken naar:", this.searchQuery);
+      // Search is reactive via v-model, no action needed
     },
     goToEventDetail(event) {
       this.$router.push({ name: "event-detail", params: { id: event.id } });
@@ -218,7 +218,6 @@ export default {
   justify-content: center;
   padding: 1rem;
   background-color: #f9f9f9;
-  /* Same as search section to blend or distinct */
   border-bottom: 1px solid #eee;
 }
 
