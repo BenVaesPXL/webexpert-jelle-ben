@@ -9,21 +9,25 @@
 
     <section class="search-section">
       <div class="search-bar">
-        <input v-model="searchQuery" type="text" placeholder="Zoek op titel, locatie of datum" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Zoek op titel, locatie of datum"
+        />
         <button @click="onSearch">Zoeken</button>
       </div>
     </section>
 
     <section class="controls-section">
       <div class="view-toggle">
-        <button 
-          :class="{ active: viewMode === 'list' }" 
+        <button
+          :class="{ active: viewMode === 'list' }"
           @click="viewMode = 'list'"
         >
           Lijst
         </button>
-        <button 
-          :class="{ active: viewMode === 'calendar' }" 
+        <button
+          :class="{ active: viewMode === 'calendar' }"
           @click="viewMode = 'calendar'"
         >
           Kalender
@@ -32,7 +36,7 @@
     </section>
 
     <section class="events-section">
-      <h3>{{ viewMode === 'list' ? 'Resultaten' : 'Evenementen Kalender' }}</h3>
+      <h3>{{ viewMode === "list" ? "Resultaten" : "Evenementen Kalender" }}</h3>
 
       <div v-if="filteredEvents.length === 0" class="empty-state">
         Geen evenementen gevonden.
@@ -42,10 +46,16 @@
         <!-- List View -->
         <div v-if="viewMode === 'list'">
           <div class="event-grid">
-            <EventCard v-for="event in paginatedEvents" :key="event.id" :event="event" />
+            <EventCard
+              v-for="event in paginatedEvents"
+              :key="event.id"
+              :event="event"
+            />
           </div>
           <div class="pagination" v-if="totalPages > 1">
-            <button :disabled="page === 1" @click="page = page - 1">Vorige</button>
+            <button :disabled="page === 1" @click="page = page - 1">
+              Vorige
+            </button>
             <span>Pagina {{ page }} / {{ totalPages }}</span>
             <button :disabled="page === totalPages" @click="page = page + 1">
               Volgende
@@ -53,11 +63,10 @@
           </div>
         </div>
 
-        <!-- Calendar View -->
         <div v-else class="calendar-wrapper">
-          <EventCalendar 
-            :events="allEventsForCalendar" 
-            @event-click="goToEventDetail" 
+          <EventCalendar
+            :events="allEventsForCalendar"
+            @event-click="goToEventDetail"
           />
         </div>
       </template>
@@ -74,12 +83,12 @@ export default {
   name: "EventListView",
   components: {
     EventCard,
-    EventCalendar
+    EventCalendar,
   },
   data() {
     return {
       eventsStore: useEventsStore(),
-      viewMode: 'list' // 'list' or 'calendar'
+      viewMode: "list",
     };
   },
   computed: {
@@ -112,7 +121,9 @@ export default {
       });
     },
     totalPages() {
-      return Math.ceil(this.sortedEvents.length / this.eventsStore.perPage) || 1;
+      return (
+        Math.ceil(this.sortedEvents.length / this.eventsStore.perPage) || 1
+      );
     },
     paginatedEvents() {
       const start = (this.page - 1) * this.eventsStore.perPage;
@@ -120,22 +131,21 @@ export default {
     },
     allEventsForCalendar() {
       return this.filteredEvents;
-    }
+    },
   },
   methods: {
     onSearch() {
       console.log("Zoeken naar:", this.searchQuery);
     },
     goToEventDetail(event) {
-      this.$router.push({ name: 'event-detail', params: { id: event.id } });
-    }
+      this.$router.push({ name: "event-detail", params: { id: event.id } });
+    },
   },
   mounted() {
     this.eventsStore.fetchEvents();
   },
 };
 </script>
-
 
 <style scoped>
 .home {

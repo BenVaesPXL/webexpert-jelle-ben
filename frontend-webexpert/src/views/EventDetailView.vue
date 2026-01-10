@@ -152,7 +152,6 @@ export default {
         : null;
       const endsAt = ticket.sale_ends_at ? new Date(ticket.sale_ends_at) : null;
 
-      // Require a start date and only allow on/after it
       if (!startsAt || Number.isNaN(startsAt) || startsAt > now) return false;
       if (endsAt && !Number.isNaN(endsAt) && endsAt < now) return false;
 
