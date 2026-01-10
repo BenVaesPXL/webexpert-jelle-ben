@@ -46,16 +46,5 @@ class Event extends Model
         return $this->hasMany(Ticket::class);
     }
 
-    /**
-     * Enkel tickets die effectief te koop zijn
-     */
-    public function availableTickets()
-    {
-        return $this->hasMany(Ticket::class)
-            ->where('available_quantity', '>', 0)
-            ->where(function ($q) {
-                $q->whereNull('sale_starts_at')
-                  ->orWhere('sale_starts_at', '<=', now());
-            });
-    }
+    // ...existing code...
 }

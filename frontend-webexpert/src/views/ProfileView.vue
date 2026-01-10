@@ -16,20 +16,30 @@
       </div>
       <div class="list" v-else>
         <article v-for="booking in bookings" :key="booking.id" class="item">
-          <div>
+          <div class="item-info">
             <h4>{{ booking.event?.title }}</h4>
             <p>
               {{ booking.quantity }}x {{ booking.ticket?.type }} - €{{
                 booking.price_paid
               }}
             </p>
-            <small>Status: {{ booking.status }}</small>
+            <small :class="{ 'status-cancelled': booking.status === 'cancelled' }">Status: {{ booking.status }}</small>
           </div>
-          <div>
+          <div class="item-details">
             <p>
               {{ formatDate(booking.event?.start_date) }} -
               {{ booking.event?.location }}
             </p>
+          </div>
+          <div class="item-actions">
+            <button
+              v-if="booking.status !== 'cancelled'"
+              class="btn cancel"
+              :disabled="cancellingId === booking.id"
+              @click="cancelBooking(booking.id)"
+            >
+              {{ cancellingId === booking.id ? 'Annuleren...' : 'Annuleer' }}
+            </button>
           </div>
         </article>
       </div>
@@ -114,6 +124,7 @@ export default {
       favLoading: false,
       error: null,
       favError: null,
+      cancellingId: null,
       passwordForm: {
         current_password: "",
         password: "",
@@ -160,6 +171,38 @@ export default {
         this.favError = err.message;
       } finally {
         this.favLoading = false;
+      }
+    },
+
+    async cancelBooking(bookingId) {
+      if (!confirm('Weet je zeker dat je deze boeking wilt annuleren?')) {
+        return;
+      }
+
+      this.cancellingId = bookingId;
+      try {
+        const token = await this.auth.ensureCsrf();
+        const res = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+          },
+          credentials: 'include',
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.message || 'Annuleren mislukt');
+        }
+
+        
+        await this.loadBookings();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        this.cancellingId = null;
       }
     },
 
@@ -252,10 +295,26 @@ header {
 .item {
   display: flex;
   justify-content: space-between;
+  align-items: stretch;
   gap: 1rem;
   border: 1px solid #e5e7eb;
   padding: 0.75rem;
   border-radius: 10px;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-details {
+  flex-shrink: 0;
+}
+
+.item-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  align-self: flex-end;
 }
 
 .error {
@@ -315,4 +374,23 @@ header {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.btn.cancel {
+  background: linear-gradient(120deg, #dc2626, #ef4444);
+  color: #fff;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.btn.cancel:hover:not(:disabled) {
+  background: linear-gradient(120deg, #b91c1c, #dc2626);
+}
+
+.status-cancelled {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
 </style>
