@@ -13,7 +13,6 @@ class EventController extends Controller
         $user = auth()->user();
         $includeDrafts = $request->boolean('include_drafts', false);
 
-        // Only show drafts when explicitly requested by an admin (for admin panel)
         $query = Event::with('tickets')->orderBy('start_date');
         if (!($user && $user->role === 'admin' && $includeDrafts)) {
             $query->where('is_published', true);
@@ -29,7 +28,6 @@ class EventController extends Controller
 
     public function show($id)
     {
-        // Haal het event op, inclusief alle tickets (gesorteerd op prijs)
         $event = Event::with([
             'tickets' => function ($q) {
                 $q->orderBy('price');
@@ -41,7 +39,6 @@ class EventController extends Controller
             abort(404);
         }
 
-        // Geeft event details terug, inclusief tickets
         return response()->json([
             'success' => true,
             'data' => [

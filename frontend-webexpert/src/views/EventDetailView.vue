@@ -10,11 +10,7 @@
   <section v-else>
     <section class="hero">
       <div v-if="event.image" class="hero-image">
-        <img 
-          :src="imageUrl" 
-          :alt="event.title"
-          class="image"
-        />
+        <img :src="imageUrl" :alt="event.title" class="image" />
       </div>
       <div class="hero-content">
         <h2>{{ event.title }}</h2>
@@ -55,7 +51,9 @@
                 <input
                   type="number"
                   v-model.number="quantities[ticket.id]"
-                  min="1"
+                  :min="1"
+                  :max="ticket.quantity"
+                  @input="handleQuantityInput(ticket)"
                 />
               </div>
               <button @click="reserve(ticket)">Reserveer</button>
@@ -121,7 +119,7 @@ export default {
   computed: {
     imageUrl() {
       if (!this.event?.image) return null;
-      return `${API_BASE.replace('/api', '')}/storage/${this.event.image}`;
+      return `${API_BASE.replace("/api", "")}/storage/${this.event.image}`;
     },
   },
   methods: {
@@ -154,7 +152,6 @@ export default {
         : null;
       const endsAt = ticket.sale_ends_at ? new Date(ticket.sale_ends_at) : null;
 
-      // Require a start date and only allow on/after it
       if (!startsAt || Number.isNaN(startsAt) || startsAt > now) return false;
       if (endsAt && !Number.isNaN(endsAt) && endsAt < now) return false;
 
@@ -182,6 +179,15 @@ export default {
       }
 
       return "";
+    },
+
+    handleQuantityInput(ticket) {
+      const val = this.quantities[ticket.id];
+      if (val > ticket.quantity) {
+        this.quantities[ticket.id] = ticket.quantity;
+      } else if (val < 1) {
+        this.quantities[ticket.id] = 1;
+      }
     },
 
     async reserve(ticket) {

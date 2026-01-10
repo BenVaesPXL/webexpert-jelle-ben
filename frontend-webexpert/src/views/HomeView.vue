@@ -91,41 +91,6 @@ export default {
   font-size: 1.1rem;
 }
 
-.search-section {
-  width: 100%;
-  background-color: #f9f9f9;
-  padding: 2rem 1rem;
-  display: flex;
-  justify-content: center;
-}
-
-.search-bar {
-  width: 90%;
-  max-width: 800px;
-  display: flex;
-  gap: 1rem;
-}
-
-.search-bar input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.search-bar button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.search-bar button:hover {
-  background-color: #0056b3;
-}
-
 .events-section {
   width: 100%;
   padding: 3rem 1rem;
