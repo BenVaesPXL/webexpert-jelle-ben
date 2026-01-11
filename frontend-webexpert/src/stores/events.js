@@ -110,7 +110,8 @@ export const useEventsStore = defineStore("events", {
               }));
             }
           }
-        } catch (e) {
+        } catch {
+          // Favorites fetch failed silently - non-critical
         }
       } catch (error) {
         this.error = error.message;
@@ -238,7 +239,6 @@ export const useEventsStore = defineStore("events", {
     async updateEventWithFile(id, formData) {
       const auth = useAuthStore();
       const token = await auth.ensureCsrf();
-      // Add _method=PUT for FormData with PUT request
       formData.append("_method", "PUT");
       const headers = {
         Accept: "application/json",

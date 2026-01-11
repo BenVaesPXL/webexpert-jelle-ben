@@ -72,17 +72,3 @@ Route::middleware('web')->group(function () {
         Route::delete('/events/{id}', [EventController::class, 'destroy']);
     });
 });
-
-
-/*
- below are commented examples
-| showing how these routes could be protected (e.g. with Sanctum or auth:api).
-| Uncomment and adjust when you're ready. Note the event-nested paths.
-|
-| Route::middleware('auth:sanctum')->group(function () {
-|     Route::post('/events/{event}/tickets', [TicketController::class, 'store']);
-|     Route::put('/events/{event}/tickets/{ticket}', [TicketController::class, 'update']);
-|     Route::delete('/events/{event}/tickets/{ticket}', [TicketController::class, 'destroy']);
-| });
-*/
-

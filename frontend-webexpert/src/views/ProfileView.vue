@@ -32,6 +32,16 @@
             <p>{{ formatDate(booking.event?.start_date) }}</p>
             <p>{{ booking.event?.location }}</p>
           </div>
+          <div class="item-actions">
+            <button
+              v-if="booking.status !== 'cancelled'"
+              class="btn cancel"
+              :disabled="cancellingId === booking.id"
+              @click="cancelBooking(booking.id)"
+            >
+              {{ cancellingId === booking.id ? 'Annuleren...' : 'Annuleer' }}
+            </button>
+          </div>
         </article>
       </div>
     </section>
@@ -130,6 +140,44 @@ export default {
       catch (err) { this.favError = err.message; }
       finally { this.favLoading = false; }
     },
+
+    async cancelBooking(bookingId) {
+      if (!confirm('Weet je zeker dat je deze boeking wilt annuleren?')) {
+        return;
+      }
+
+      this.cancellingId = bookingId;
+      try {
+        const token = await this.auth.ensureCsrf();
+        const res = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+          },
+          credentials: 'include',
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.message || 'Annuleren mislukt');
+        }
+
+        
+        await this.loadBookings();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        this.cancellingId = null;
+      }
+    },
+
+    formatDate(dateStr) {
+      if (!dateStr) return "";
+      return new Date(dateStr).toLocaleString();
+    },
+
     formatDate(dateStr) { return dateStr ? new Date(dateStr).toLocaleString() : ""; },
     async changePassword() {
       this.passwordLoading = true;
@@ -251,6 +299,36 @@ header {
   color: #4b5563;
 }
 
+.item-info {
+  flex: 1;
+}
+
+.item-details {
+  flex-shrink: 0;
+}
+
+.item-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  align-self: flex-end;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-details {
+  flex-shrink: 0;
+}
+
+.item-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  align-self: flex-end;
+}
+
 .error {
   color: #d14343;
 }
@@ -329,4 +407,23 @@ header {
     margin-top: 0.25rem;
   }
 }
+
+.btn.cancel {
+  background: linear-gradient(120deg, #dc2626, #ef4444);
+  color: #fff;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.btn.cancel:hover:not(:disabled) {
+  background: linear-gradient(120deg, #b91c1c, #dc2626);
+}
+
+.status-cancelled {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
 </style>

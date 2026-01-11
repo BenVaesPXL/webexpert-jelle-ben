@@ -31,7 +31,7 @@ class FavoriteController extends Controller
     {
         $event = Event::findOrFail($eventId);
         
-        // Check if already favorited
+        
         if ($request->user()->favorites()->where('event_id', $eventId)->exists()) {
             return response()->json([
                 'success' => false,

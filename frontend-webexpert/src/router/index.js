@@ -67,7 +67,8 @@ router.beforeEach(async (to, from, next) => {
     try {
       await auth.fetchUser();
     } catch (err) {
-      // ignore errors; user stays null
+      console.error("Failed to fetch user:", err);
+      auth.user = null;
     }
   }
 

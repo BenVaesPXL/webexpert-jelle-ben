@@ -9,6 +9,9 @@
 
   <section v-else>
     <section class="hero">
+      <div v-if="event.image" class="hero-image">
+        <img :src="imageUrl" :alt="event.title" class="image" />
+      </div>
       <div class="hero-content">
         <h2>{{ event.title }}</h2>
         <p>
@@ -31,7 +34,6 @@
 
     <div class="content-columns">
       <div class="content-left">
-        <!-- Tickets -->
         <section class="tickets">
           <h3>Beschikbare tickets</h3>
           <div class="ticket-grid">
@@ -171,6 +173,16 @@ export default {
 
       return "";
     },
+
+    handleQuantityInput(ticket) {
+      const val = this.quantities[ticket.id];
+      if (val > ticket.quantity) {
+        this.quantities[ticket.id] = ticket.quantity;
+      } else if (val < 1) {
+        this.quantities[ticket.id] = 1;
+      }
+    },
+
     async reserve(ticket) {
       this.reserveMessage = null;
       this.reserveError = null;
