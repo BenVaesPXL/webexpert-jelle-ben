@@ -403,7 +403,21 @@ export const useEventsStore = defineStore("events", {
       }
     },
 
-    // Mark an event as favorited/unfavorited in local store
+    resetFavorites() {
+      this.events = this.events.map((e) => ({
+        ...e,
+        is_favorited: false,
+        favorited: false,
+      }));
+      if (this.currentEvent) {
+        this.currentEvent = {
+          ...this.currentEvent,
+          is_favorited: false,
+          favorited: false,
+        };
+      }
+    },
+
     setFavorite(eventId, isFavorited) {
       this.events = this.events.map((e) =>
         e.id === Number(eventId)
