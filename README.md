@@ -70,6 +70,14 @@ php artisan storage:link
 
 > **Note:** De SQL database wordt meegeleverd met het project.
 
+#### Database Seeding
+
+Bij het seeden van de database wordt automatisch een admin gebruiker aangemaakt:
+- **Email:** `admin@test.be`
+- **Wachtwoord:** `password`
+
+> **Let op:** Foto's zijn niet standaard opgenomen in de database, maar kunnen handmatig worden toegevoegd via de admin interface.
+
 ### Frontend (Vue.js)
 
 ```bash

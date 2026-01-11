@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { useEventsStore } from "./events";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -84,6 +85,7 @@ export const useAuthStore = defineStore("auth", {
         this.user = json.data.user;
         csrfToken = null;
         await fetchCsrf();
+        useEventsStore().resetFavorites();
         return json;
       } catch (err) {
         this.error = err.message;
@@ -112,6 +114,7 @@ export const useAuthStore = defineStore("auth", {
       } finally {
         this.user = null;
         csrfToken = null;
+        useEventsStore().resetFavorites();
       }
     },
 

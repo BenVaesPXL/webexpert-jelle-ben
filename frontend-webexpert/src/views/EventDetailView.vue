@@ -9,9 +9,6 @@
 
   <section v-else>
     <section class="hero">
-      <div v-if="event.image" class="hero-image">
-        <img :src="imageUrl" :alt="event.title" class="image" />
-      </div>
       <div class="hero-content">
         <h2>{{ event.title }}</h2>
         <p>
