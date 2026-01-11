@@ -1,13 +1,20 @@
 <template>
   <div class="profile">
     <section class="hero">
-      <h2>Hallo {{ auth.user?.name }}</h2>
-      <p>{{ auth.user?.email }}</p>
+      <div class="hero-content">
+        <div class="avatar">
+          <span>{{ auth.user?.name?.[0] || "?" }}</span>
+        </div>
+        <div class="hero-text">
+          <h2>Hallo {{ auth.user?.name }}</h2>
+          <p>{{ auth.user?.email }}</p>
+        </div>
+      </div>
     </section>
 
     <section class="panel">
       <header>
-        <h3>Bookings</h3>
+        <h3>Boekingen</h3>
         <span v-if="loading">Laden...</span>
       </header>
       <p v-if="error" class="error">{{ error }}</p>
@@ -16,20 +23,14 @@
       </div>
       <div class="list" v-else>
         <article v-for="booking in bookings" :key="booking.id" class="item">
-          <div>
+          <div class="item-left">
             <h4>{{ booking.event?.title }}</h4>
-            <p>
-              {{ booking.quantity }}x {{ booking.ticket?.type }} - €{{
-                booking.price_paid
-              }}
-            </p>
+            <p>{{ booking.quantity }}x {{ booking.ticket?.type }} - €{{ booking.price_paid }}</p>
             <small>Status: {{ booking.status }}</small>
           </div>
-          <div>
-            <p>
-              {{ formatDate(booking.event?.start_date) }} -
-              {{ booking.event?.location }}
-            </p>
+          <div class="item-right">
+            <p>{{ formatDate(booking.event?.start_date) }}</p>
+            <p>{{ booking.event?.location }}</p>
           </div>
         </article>
       </div>
@@ -46,11 +47,11 @@
       </div>
       <div class="list" v-else>
         <article v-for="fav in favorites" :key="fav.id" class="item">
-          <div>
+          <div class="item-left">
             <h4>{{ fav.title }}</h4>
             <p>{{ fav.location }}</p>
           </div>
-          <div>
+          <div class="item-right">
             <p>{{ formatDate(fav.start_date) }}</p>
           </div>
         </article>
@@ -64,29 +65,15 @@
       <form @submit.prevent="changePassword" class="password-form">
         <label>
           Huidig wachtwoord
-          <input
-            type="password"
-            v-model="passwordForm.current_password"
-            required
-          />
+          <input type="password" v-model="passwordForm.current_password" required />
         </label>
         <label>
           Nieuw wachtwoord
-          <input
-            type="password"
-            v-model="passwordForm.password"
-            required
-            minlength="8"
-          />
+          <input type="password" v-model="passwordForm.password" required minlength="8" />
         </label>
         <label>
           Bevestig nieuw wachtwoord
-          <input
-            type="password"
-            v-model="passwordForm.password_confirmation"
-            required
-            minlength="8"
-          />
+          <input type="password" v-model="passwordForm.password_confirmation" required minlength="8" />
         </label>
         <p v-if="passwordError" class="error">{{ passwordError }}</p>
         <p v-if="passwordSuccess" class="success">{{ passwordSuccess }}</p>
@@ -100,7 +87,6 @@
 
 <script>
 import { useAuthStore } from "../stores/auth";
-
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default {
@@ -114,11 +100,7 @@ export default {
       favLoading: false,
       error: null,
       favError: null,
-      passwordForm: {
-        current_password: "",
-        password: "",
-        password_confirmation: "",
-      },
+      passwordForm: { current_password: "", password: "", password_confirmation: "" },
       passwordLoading: false,
       passwordError: null,
       passwordSuccess: null,
@@ -127,87 +109,49 @@ export default {
   methods: {
     async authFetch(path) {
       const res = await fetch(`${API_BASE}${path}`, {
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
         credentials: "include",
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Request failed");
       return json;
     },
-
     async loadBookings() {
       this.loading = true;
       this.error = null;
-      try {
-        const json = await this.authFetch("/bookings");
-        this.bookings = json.data || [];
-      } catch (err) {
-        this.error = err.message;
-      } finally {
-        this.loading = false;
-      }
+      try { const json = await this.authFetch("/bookings"); this.bookings = json.data || []; }
+      catch (err) { this.error = err.message; }
+      finally { this.loading = false; }
     },
-
     async loadFavorites() {
       this.favLoading = true;
       this.favError = null;
-      try {
-        const json = await this.authFetch("/favorites");
-        this.favorites = json.data || [];
-      } catch (err) {
-        this.favError = err.message;
-      } finally {
-        this.favLoading = false;
-      }
+      try { const json = await this.authFetch("/favorites"); this.favorites = json.data || []; }
+      catch (err) { this.favError = err.message; }
+      finally { this.favLoading = false; }
     },
-
-    formatDate(dateStr) {
-      if (!dateStr) return "";
-      return new Date(dateStr).toLocaleString();
-    },
-
+    formatDate(dateStr) { return dateStr ? new Date(dateStr).toLocaleString() : ""; },
     async changePassword() {
       this.passwordLoading = true;
       this.passwordError = null;
       this.passwordSuccess = null;
-
       try {
         const token = await this.auth.ensureCsrf();
         const res = await fetch(`${API_BASE}/user/password`, {
           method: "PUT",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            ...(token ? { "X-CSRF-TOKEN": token } : {}),
-          },
+          headers: { Accept: "application/json", "Content-Type": "application/json", ...(token ? { "X-CSRF-TOKEN": token } : {}) },
           credentials: "include",
           body: JSON.stringify(this.passwordForm),
         });
-
         const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.message || "Wachtwoord wijzigen mislukt");
-        }
-
+        if (!res.ok) throw new Error(json.message || "Wachtwoord wijzigen mislukt");
         this.passwordSuccess = json.message || "Wachtwoord succesvol gewijzigd";
-        this.passwordForm = {
-          current_password: "",
-          password: "",
-          password_confirmation: "",
-        };
-      } catch (err) {
-        this.passwordError = err.message;
-      } finally {
-        this.passwordLoading = false;
-      }
+        this.passwordForm = { current_password: "", password: "", password_confirmation: "" };
+      } catch (err) { this.passwordError = err.message; }
+      finally { this.passwordLoading = false; }
     },
   },
-  mounted() {
-    this.loadBookings();
-    this.loadFavorites();
-  },
+  mounted() { this.loadBookings(); this.loadFavorites(); },
 };
 </script>
 
@@ -224,8 +168,39 @@ export default {
 .hero {
   background: linear-gradient(135deg, #007bff 0%, #b909c6 100%);
   color: #fff;
-  padding: 1.5rem;
+  padding: 2rem;
   border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.hero-text h2 {
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+.hero-text p {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.85;
 }
 
 .panel {
@@ -233,7 +208,7 @@ export default {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 header {
@@ -252,22 +227,43 @@ header {
 .item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 1rem;
-  border: 1px solid #e5e7eb;
   padding: 0.75rem;
   border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.item-left h4 {
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+}
+
+.item-left p {
+  margin: 0;
+}
+
+.item-right p {
+  margin: 0;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #4b5563;
 }
 
 .error {
   color: #d14343;
 }
 
-.empty {
-  color: #6b7280;
-}
-
 .success {
   color: #15803d;
+}
+
+.empty {
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem 0;
 }
 
 .password-form {
@@ -298,21 +294,39 @@ header {
   gap: 0.35rem;
   padding: 0.65rem 1rem;
   border-radius: 8px;
-  border: 1px solid #0b5ac2;
-  text-decoration: none;
   font-weight: 600;
   cursor: pointer;
-  align-self: flex-start;
 }
 
 .btn.primary {
   background: linear-gradient(120deg, #0b5ac2, #3f8bff);
   color: #fff;
+  border: none;
   box-shadow: 0 8px 24px rgba(11, 90, 194, 0.25);
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .item {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .item-right {
+    text-align: left;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
 }
 </style>
